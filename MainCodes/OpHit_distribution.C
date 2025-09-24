@@ -3,61 +3,13 @@ Code for plotting the distribution of OpHits
 */
 
 // INCLUDES
-
+// Definition of the variables of the tree
 #include "/Users/carlosmm/Documents/Doctorado/ServiceTask/Task/tree_definitions_light/tree_utils.cpp"
 #include "/Users/carlosmm/Documents/Doctorado/ServiceTask/Task/tree_definitions_light/Includes.h"
+// Definition of the constants
 #include "/Users/carlosmm/Documents/Doctorado/ServiceTask/Task/Constants/Constants.h"
-
-// AUXILIARY FUNCTIONS
-
-//Function to tune the histograms (all except the colors, that I will choose)
-void tune_hist(TH1F* hist){
-    hist->SetStats(0);
-
-    hist->GetXaxis()->SetTitleSize(0.04);
-    hist->GetYaxis()->SetTitleSize(0.04);
-    hist->GetXaxis()->SetLabelSize(0.03);
-    hist->GetYaxis()->SetLabelSize(0.03);
-
-    hist->SetLineStyle(1);
-    hist->SetLineWidth(2);
-    hist->SetFillStyle(1001);       //1001-->filling, 0-->no filling 
-    hist->SetMarkerColor(kBlack);
-    hist->SetMarkerStyle(21);
-    hist->SetMarkerSize(0.);
-
-    hist->SetLineColor(kBlue);
-    hist->SetFillColorAlpha(kBlue-3, 0.75);
-
-    hist->GetXaxis()->SetTitle("Absolute time (#mu s)");
-    hist->GetYaxis()->SetTitle("# photo-electrons (all channels)");
-
-    hist->GetXaxis()->SetTitleOffset(0.88);  // Adjust the offset of the X-axis title
-    hist->GetYaxis()->SetTitleOffset(1.3);  // Adjust the offset of the Y-axis title
-    
-}
-
-// functions to tune the lines
-void tune_line_start(TLine* l){
-    l->SetLineColor(kRed);
-    l->SetLineStyle(1);         // Solid line
-    l->SetLineWidth(1);
-}
-
-// Func
-void tune_line_finish(TLine* l){
-    l->SetLineColor(kRed);
-    l->SetLineStyle(2);         // Dashed line
-    l->SetLineWidth(1);
-}
-
-// functions to tune the arrows
-void tune_arrow(TArrow* arrow){
-    arrow->SetLineColor(kRed-2);
-    arrow->SetLineWidth(1);
-}
-
-
+// Definition of the functions to tune the histograms and lines and arrows
+#include "/Users/carlosmm/Documents/Doctorado/ServiceTask/Task/Functions/TuneFunctions.cpp"
 
 
 // MAIN CODE
@@ -213,7 +165,7 @@ void OpHit_distribution(){
     // I loop over all histograms
     for(int k=0; k<hists.size(); k++){
         // I draw the histogram 
-        tune_hist(hists.at(k));
+        TuneHist(hists.at(k));
         hists.at(k)->Draw("hist");
         // Get the maximum of the hists
         double line_max = hists.at(k)->GetMaximum();
@@ -228,9 +180,9 @@ void OpHit_distribution(){
             lines_finish.at(k).at(h)->SetY2(line_max);
 
             // I tune the lines and arrow to look better
-            tune_line_start(lines_start.at(k).at(h));
-            tune_line_finish(lines_finish.at(k).at(h));
-            tune_arrow(arrows.at(k).at(h));
+            TuneLine_start(lines_start.at(k).at(h));
+            TuneLine_finish(lines_finish.at(k).at(h));
+            TuneArrow(arrows.at(k).at(h));
 
             // Redefine the y of the arrows
             double arrow_y = line_max * 0.90; // 90% of max height
