@@ -31,6 +31,7 @@ void OpHit_distribution(){
 
     // declaration of the OpAna TTree
     TTree *event_tree;
+    TTree *pdsmap_tree;
 
     // Declaration of the files 
     std::vector<string> filenames;
@@ -45,6 +46,7 @@ void OpHit_distribution(){
         input_file=nullptr;
         tree_dir=nullptr;
         event_tree=nullptr;
+        pdsmap_tree=nullptr;
 
         // Put the filename as a TFile object
         input_file = new TFile(file.c_str());
@@ -53,9 +55,11 @@ void OpHit_distribution(){
         tree_dir = (TDirectoryFile*)input_file->Get("opanatree");
         // Get the event tree from the 'ana' directory
         event_tree =(TTree*)tree_dir->Get("OpAnaTree");
+        pdsmap_tree =(TTree*)tree_dir->Get("PDSMapTree");
 
         // I use the code in tree_utils.cpp to initialyze all the variables inside the TTrees. Look at tree_utils.cpp fro more info.
         set_branch_OpAna(event_tree);
+        set_branch_PDS_map(pdsmap_tree);
 
         // Now I have access to all the Branches of the TTree
         // and I’ve stored them in the variables that are defined in tree_utils.
@@ -66,7 +70,7 @@ void OpHit_distribution(){
         //  - By calling event_tree->GetEntry(i); you obtain ALL the variables of that tree entry
         //  - Then you can do whatever you want with that entry
 
-        cout << "           You are reading the file: " << file << endl;
+        cout << "-------- You are reading the file: " << file << "------" <<endl;
 
         // define more variables here
 
@@ -80,7 +84,14 @@ void OpHit_distribution(){
         int num_events=event_tree->GetEntries();
         for (int i=0; i<num_events; i++){
 
-            //cout<< "The value of 'InTimeCosmics' is: " << InTimeCosmics <<endl;
+            // I loop over the particles to see the 'creation process' of each one
+            /*
+            for(int j=0; j<process->size(); j++){
+                cout<<"Particle "<<trackID->at(j)<<" with PDG code "<<PDGcode->at(j)<<" was created by "<<process->at(j)<<endl;
+                cout<<"      The mother of this particle is: "<<motherID->at(j)<<endl;
+            }
+            cout<<endl<<endl;
+            */
 
             // Get the entry 'i' of the event tree
             event_tree->GetEntry(i);
@@ -133,10 +144,6 @@ void OpHit_distribution(){
                 // I get the minimun and maximum of the gPad
                 gPad->Update();
                 ymin = 0;
-                ymax = gPad->GetUymax();
-
-                cout<<"Maximum value: "<<ymax<<endl;
-
 
                 // I create the lines and arrow that I will need
                 TLine* l1 = new TLine(start_time, ymin, start_time, 100000);            // Start of the OpFlash

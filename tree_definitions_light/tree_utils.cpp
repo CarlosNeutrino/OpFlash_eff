@@ -32,7 +32,15 @@ Declaration of the variables inside the tree for the analyzer. The .root file wi
 - G4BeamWindow: only store MC particles and trajectories in the time window defined by this parameter. Default is [-10000, 12000] #ns.
 */
 
-/////////////////////// Variables ///////////////////////
+////////////////////// Map for PDS ////////////////////////
+// Variables to store the PDS mapping
+std::vector<int> OpDetID;        // Optical detector ID
+std::vector<double> OpDetX;      // Optical detector X position (in cm)
+std::vector<double> OpDetY;      // Optical detector Y position (in cm)
+std::vector<double> OpDetZ;      // Optical detector Z position (in cm)
+std::vector<int> OpDetType;      // Optical detector type (0: CoatedPMT, 1: UncoatedPMT, 2: VUV XARAPUCA and 3: VIS XARAPUCA)
+
+/////////////////////// Event Variables ///////////////////////
 
 // General event information
 unsigned int eventID;     // Event ID: number assigned to a event
@@ -45,11 +53,11 @@ They store information regarging all the primary neutrino interactions in a give
 Loop over the std::vector to get the energy, interaction vertex and interaction time corresponding to the 'i' neutrino interaction.
 */
 
-std::vector<double>* nuvX;                   // true neutrino interaction vertex (x axis)
-std::vector<double>* nuvY;                   // true neutrino interaction vertex (y axis)
-std::vector<double>* nuvZ;                   // true neutrino interaction vertex (z axis)
-std::vector<double>* nuvT;                   // true neutrino interaction time
-std::vector<double>* nuvE;                   // true neutrino energy in GeV
+std::vector<double>* nuvX = nullptr;                   // true neutrino interaction vertex (x axis)
+std::vector<double>* nuvY = nullptr;                   // true neutrino interaction vertex (y axis)
+std::vector<double>* nuvZ = nullptr;                   // true neutrino interaction vertex (z axis)
+std::vector<double>* nuvT = nullptr;                   // true neutrino interaction time (in ns)
+std::vector<double>* nuvE = nullptr;                   // true neutrino energy in GeV
 
 ////////////// G4 stage //////////////
 /*
@@ -59,12 +67,22 @@ Example: Consider a 1207 MeV beam nu_μ. It undergoes a charged current interact
   If e.g. the muon decays to a Michel electron, there will be an entry with PDGCode=11, motherID=1 and process=Decay.
 */
 
-std::vector<double>* E;                          // Primary energy of each MC particle (in GeV)
-std::vector<std::string>* process;               // Primary process of MC each particle
-std::vector<int>* trackID;                       // MC particle ID
-std::vector<int>* motherID;                      // ID of the mother MC particle
-std::vector<int>* PDGcode;                       // PDG code
-bool InTimeCosmics;                             // Returns true if there is a cosmic interaction during the BNB spill
+std::vector<double>* E = nullptr;                          // Primary energy of each MC particle (in GeV)
+std::vector<std::string>* process = nullptr;               // Primary process of MC each particle
+std::vector<int>* trackID = nullptr;                       // MC particle ID
+std::vector<int>* motherID = nullptr;                      // ID of the mother MC particle
+std::vector<int>* PDGcode = nullptr;                       // PDG code
+std::vector<bool>* InTimeCosmics = nullptr;                        // Returns true if there is a cosmic interaction during the BNB spill
+bool InTimeCosmicsTime = nullptr;                  // Time (in ns) of the InTime-cosmic interaction
+
+// Start and end momenta of each MC particle at the g4 stage
+std::vector<double>* StartPx = nullptr;   
+std::vector<double>* StartPy = nullptr;
+std::vector<double>* StartPz = nullptr;
+std::vector<double>* EndPx = nullptr;
+std::vector<double>* EndPy = nullptr;
+std::vector<double>* EndPz = nullptr;
+std::vector<double>* MCP_time = nullptr;
 
 // Deposited energy
 /*
@@ -72,18 +90,18 @@ Following the previous example, to read the energy deposition values and their l
  induced by the primary proton you can take energydep[1], energydepX[1]...
 */
 
-std::vector<std::vector<double>>* energydep;            // Energy deposition (in MeV) at each G4 tracking step. It's saved for each MC particle
-std::vector<std::vector<double>>* energydepX;           // Location (in cm) of each energy deposition.
-std::vector<std::vector<double>>* energydepY;
-std::vector<std::vector<double>>* energydepZ;        
-std::vector<double>* dEpromX;                           // Average X, Y, Z (in cm) location of the energy depositions. It's saved for the two TPCs (vector size is 2)
-std::vector<double>* dEpromY;
-std::vector<double>* dEpromZ;
-std::vector<double>* dEspreadX;                         // X, Y, Z standard deviation of the energy depositions. It's saved for the two TPCs (vector size is 2)
-std::vector<double>* dEspreadY;
-std::vector<double>* dEspreadZ;
-std::vector<std::vector<double>>* dElowedges;           // X, Y, Z coordinates of the lowest (max) energy deposition. It's saved for the two TPCs (vector size is 2)
-std::vector<std::vector<double>>* dEmaxedges;           // X, Y, Z coordinates of the lowest (max) energy deposition. It's saved for the two TPCs (vector size is 2)
+std::vector<std::vector<double>>* energydep = nullptr;            // Energy deposition (in MeV) at each G4 tracking step. It's saved for each MC particle
+std::vector<std::vector<double>>* energydepX = nullptr;           // Location (in cm) of each energy deposition.
+std::vector<std::vector<double>>* energydepY = nullptr;
+std::vector<std::vector<double>>* energydepZ = nullptr;        
+std::vector<double>* dEpromX = nullptr;                           // Average X, Y, Z (in cm) location of the energy depositions. It's saved for the two TPCs (vector size is 2)
+std::vector<double>* dEpromY = nullptr;
+std::vector<double>* dEpromZ = nullptr;
+std::vector<double>* dEspreadX = nullptr;                         // X, Y, Z standard deviation of the energy depositions. It's saved for the two TPCs (vector size is 2)
+std::vector<double>* dEspreadY = nullptr;
+std::vector<double>* dEspreadZ = nullptr;
+std::vector<std::vector<double>>* dElowedges = nullptr;           // X, Y, Z coordinates of the lowest (max) energy deposition. It's saved for the two TPCs (vector size is 2)
+std::vector<std::vector<double>>* dEmaxedges = nullptr;           // X, Y, Z coordinates of the lowest (max) energy deposition. It's saved for the two TPCs (vector size is 2)
 
 // Scintillation photons
 /*
@@ -94,10 +112,10 @@ Each vector in the 'vector of vecrtors' contains the times (in ns) in which each
 Imagine 567 VUV photons reach the coated PMT with ID 144. The size of the vector SimPhotonsLiteVUV[144] will be 567.
 */
 
-std::vector<double>* SimPhotonsperOpChVUV;                   // Number of true photons at each PD (VUV wavelength)
-std::vector<double>* SimPhotonsperOpChVIS;                   // Number of true photons at each PD (visible wavelength)
-std::vector<std::vector<double>>* SimPhotonsLiteVUV;         // Photon arrival times at G4 stage (VUV). In ns.
-std::vector<std::vector<double>>* SimPhotonsLiteVIS;         // Photon arrival times at G4 stage (VIS). In ns.
+std::vector<double>* SimPhotonsperOpChVUV = nullptr;                   // Number of true photons at each PD (VUV wavelength)
+std::vector<double>* SimPhotonsperOpChVIS = nullptr;                   // Number of true photons at each PD (visible wavelength)
+std::vector<std::vector<double>>* SimPhotonsLiteVUV = nullptr;         // Photon arrival times at G4 stage (VUV). In ns.
+std::vector<std::vector<double>>* SimPhotonsLiteVIS = nullptr;         // Photon arrival times at G4 stage (VIS). In ns.
 /*
 double NPhotons;                                            // Integrated number of photons in the events per PD type.
 */
@@ -111,49 +129,52 @@ Note that we may have more than one ROI per PD, so the size of the SignalsDigi b
 To get the start time and the channel corresponding to the 'i' ROI get the StampTime and OpChDigi with index 'i'.
 */
 
-std::vector<std::vector<double>>* SignalsDigi;       // Digitized signals (ADC values)
-std::vector<double>* StampTime;                      // Start time of each digitized waveform (in $\mu$s)
-std::vector<int>* OpChDigi;                          // Associated PD ID
+std::vector<std::vector<double>>* SignalsDigi = nullptr;       // Digitized signals (ADC values)
+std::vector<double>* StampTime = nullptr;                      // Start time of each digitized waveform (in $\mu$s)
+std::vector<int>* OpChDigi = nullptr;                          // Associated PD ID
 
 ////////////// reco stage //////////////
 /*
 Same scheme followed, but storing the deconvolved signals instead of the raw waveforms.
 */
 
-std::vector<std::vector<double>>* SignalsDeco;       // Deconvolved signals
-std::vector<double>* StampTimeDeco;                  // Start time of each digitized waveform (in μs)
-std::vector<int>* OpChDeco;                          // 	Associated PD ID
+std::vector<std::vector<double>>* SignalsDeco = nullptr;       // Deconvolved signals
+std::vector<double>* StampTimeDeco = nullptr;                  // Start time of each digitized waveform (in μs)
+std::vector<int>* OpChDeco = nullptr;                          // 	Associated PD ID
 
 // Pulse finder <---------- This is the part that I will use
 int nophits;                                // Total number of reconstructed OpHits
-std::vector<int>* ophit_opch;                // Optical channel corresponding to the reconstructed OpHit
-std::vector<double>* ophit_peakT;            // Waveform bin in which the OpHit gets the maximum value (in μs)
-std::vector<double>* ophit_startT;           // Start of the OpHit (in μs)
-std::vector<double>* ophit_riseT;            // OpHit rise time, relative to the StartTime (in μs)
-std::vector<double>* ophit_width;            // With of the OpHit (in μs)
-std::vector<double>* ophit_amplitude;        // Amplitude of the OpHit (in ADC units)
-std::vector<double>* ophit_area;             // Area of the OpHit (in μs x ADC units)
-std::vector<double>* ophit_pe;               // Reconstructed number of PE
+std::vector<int>* ophit_opch = nullptr;                // Optical channel corresponding to the reconstructed OpHit
+std::vector<double>* ophit_peakT = nullptr;            // Waveform bin in which the OpHit gets the maximum value (in μs)
+std::vector<double>* ophit_startT = nullptr;           // Start of the OpHit (in μs)
+std::vector<double>* ophit_riseT = nullptr;            // OpHit rise time, relative to the StartTime (in μs)
+std::vector<double>* ophit_width = nullptr;            // With of the OpHit (in μs)
+std::vector<double>* ophit_amplitude = nullptr;        // Amplitude of the OpHit (in ADC units)
+std::vector<double>* ophit_area = nullptr;             // Area of the OpHit (in μs x ADC units)
+std::vector<double>* ophit_pe = nullptr;               // Reconstructed number of PE
 
 // Clustering among different photo-detectos (a.k.a. OpFlash)
 int nopflash;                                       // Total number of reconstructed OpFlash objects
-std::vector<double>* flash_time;                     // t0 of the reconstructed OpFlashes
-std::vector<double>* flash_total_pe;                 // Integrated (all optical channels) number of photoelectrons in each OpFlash
-std::vector<std::vector<double>>* flash_pe_v;        // Vector containing the reconstructed number of photoelectron in each optical channel for each OpFlash
+std::vector<double>* flash_time = nullptr;                     // t0 of the reconstructed OpFlashes
+std::vector<double>* flash_total_pe = nullptr;                 // Integrated (all optical channels) number of photoelectrons in each OpFlash
+std::vector<std::vector<double>>* flash_pe_v = nullptr;        // Vector containing the reconstructed number of photoelectron in each optical channel for each OpFlash
 
-std::vector<double>* flash_x;      // X, Y, Z position of the reconstructed OpFlash
-std::vector<double>* flash_y;
-std::vector<double>* flash_z;
+std::vector<double>* flash_x = nullptr;      // X, Y, Z position of the reconstructed OpFlash --> SEE HOW THIS IS CALCULATED
+std::vector<double>* flash_y = nullptr;
+std::vector<double>* flash_z = nullptr;
+std::vector<double>* flash_xerr = nullptr;      // X, Y, Z position of the reconstructed OpFlash --> SEE HOW THIS IS CALCULATED
+std::vector<double>* flash_yerr = nullptr;
+std::vector<double>* flash_zerr = nullptr;
 
 // Save the attributes of the OpHits associated to each OpFlash
-std::vector<std::vector<double>>* flash_ophit_time;
-std::vector<std::vector<double>>* flash_ophit_risetime;
-std::vector<std::vector<double>>* flash_ophit_starttime;
-std::vector<std::vector<double>>* flash_ophit_amp;
-std::vector<std::vector<double>>* flash_ophit_area;
-std::vector<std::vector<double>>* flash_ophit_width;
-std::vector<std::vector<double>>* flash_ophit_pe;
-std::vector<std::vector<double>>* flash_ophit_ch;
+std::vector<std::vector<double>>* flash_ophit_time = nullptr;
+std::vector<std::vector<double>>* flash_ophit_risetime = nullptr;
+std::vector<std::vector<double>>* flash_ophit_starttime = nullptr;
+std::vector<std::vector<double>>* flash_ophit_amp = nullptr;
+std::vector<std::vector<double>>* flash_ophit_area = nullptr;
+std::vector<std::vector<double>>* flash_ophit_width = nullptr;
+std::vector<std::vector<double>>* flash_ophit_pe = nullptr;
+std::vector<std::vector<double>>* flash_ophit_ch = nullptr;
 
 
 //Function to set all the branches of the tree containing event information
@@ -178,6 +199,15 @@ void set_branch_OpAna(TTree* tree) {
     tree->SetBranchAddress("motherID", &motherID);
     tree->SetBranchAddress("PDGcode", &PDGcode);
     tree->SetBranchAddress("InTimeCosmics", &InTimeCosmics);
+
+    tree->SetBranchAddress("InTimeCosmicsTime", &InTimeCosmicsTime);
+    tree->SetBranchAddress("StartPx", &StartPx);
+    tree->SetBranchAddress("StartPy", &StartPy);
+    tree->SetBranchAddress("StartPz", &StartPz);
+    tree->SetBranchAddress("EndPx", &EndPx);
+    tree->SetBranchAddress("EndPy", &EndPy);
+    tree->SetBranchAddress("EndPz", &EndPz);
+    tree->SetBranchAddress("MCP_time", &MCP_time);
 
     tree->SetBranchAddress("energydep", &energydep);
     tree->SetBranchAddress("energydepX", &energydepX);
@@ -236,4 +266,13 @@ void set_branch_OpAna(TTree* tree) {
     tree->SetBranchAddress("flash_ophit_pe", &flash_ophit_pe);
     tree->SetBranchAddress("flash_ophit_ch", &flash_ophit_ch);
 
+}
+
+
+void set_branch_PDS_map(TTree* tree) {
+    tree->Branch("OpDetID", &OpDetID);
+    tree->Branch("OpDetX", &OpDetX);
+    tree->Branch("OpDetY", &OpDetY);
+    tree->Branch("OpDetZ", &OpDetZ);
+    tree->Branch("OpDetType", &OpDetType);
 }

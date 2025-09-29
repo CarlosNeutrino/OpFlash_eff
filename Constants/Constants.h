@@ -14,3 +14,6 @@ const int PE_MIN = 10;          // minimum value pf photo-electrons for the sum 
 
 // Numeric constants
 const double PI = TMath::Pi();
+
+// Window for matching OpFlash with MCTruth (in ns)
+const double TIME_WINDOW = 50.0; // 50 ns
