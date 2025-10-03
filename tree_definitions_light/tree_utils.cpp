@@ -72,8 +72,8 @@ std::vector<std::string>* process = nullptr;               // Primary process of
 std::vector<int>* trackID = nullptr;                       // MC particle ID
 std::vector<int>* motherID = nullptr;                      // ID of the mother MC particle
 std::vector<int>* PDGcode = nullptr;                       // PDG code
-std::vector<bool>* InTimeCosmics = nullptr;                        // Returns true if there is a cosmic interaction during the BNB spill
-bool InTimeCosmicsTime = nullptr;                  // Time (in ns) of the InTime-cosmic interaction
+bool InTimeCosmics;                        // Returns true if there is a cosmic interaction during the BNB spill
+bool InTimeCosmicsTime;                  // Time (in ns) of the InTime-cosmic interaction
 
 // Start and end momenta of each MC particle at the g4 stage
 std::vector<double>* StartPx = nullptr;   

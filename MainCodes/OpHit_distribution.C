@@ -203,7 +203,7 @@ void OpHit_distribution(){
         }
 
         // I save the histogram
-        c1->SaveAs(Form("Histograms/Distribution_%i.pdf", k));
+        c1->SaveAs(Form("Distribution_OpHit/Distribution_%i.pdf", k));
     }
    
 }
