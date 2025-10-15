@@ -25,23 +25,28 @@ void Efficiency(){
     - flashed: neutrino interactions that have one corresponding OpFlash
     */
 
+   // enables automatic error storage for all subsequent TH1 objects
+   TH1::SetDefaultSumw2();  
+
     // neutrinos that SHOULD be reconstructed: vertex inside TPC
-    TH1F *hist_Evis_true_TPC = new TH1F("Evis_total", "Eff_hist_Evis_total",  30, 0, 5000);
+    TH1F *hist_Enu_true_TPC = new TH1F("Enu_total", "Eff_hist_Enu_total",  30, 0, 5000);
     TH1F *hist_drift_true_TPC = new TH1F("drift_total", "Eff_hist_drift_total",  30, 0, 200);
 
     // neutrinos that leave an OpFlash: vertex MAYBE NOT inside TPC + have one OpFlash
-    TH1F *hist_Evis_flashed = new TH1F("Evis_flashed", "Eff_hist_Evis_flashed",  30, 0, 5000);
+    TH1F *hist_Enu_flashed = new TH1F("Enu_flashed", "Eff_hist_Enu_flashed",  30, 0, 5000);
     TH1F *hist_drift_flashed = new TH1F("drift_flashed", "Eff_hist_drift_flashed",  30, 0, 200);
 
     // neutrinos that are reconstructed and SHOULD be reconstrcted: vertex inside TPC + have OpFlash
-    TH1F *hist_Evis_flashed_TPC = new TH1F("Evis_flashed_TPC", "Eff_hist_Evis_flashed",  30, 0, 5000);
-    TH1F *hist_drift_flashed_TPC = new TH1F("drift_flashed_TPC", "Eff_hist_drift_flashed",  30, 0, 200);
+    TH1F *hist_Enu_flashed_TPC = new TH1F("Enu_flashed_TPC", "Eff_hist_Enu_flashed_TPC",  30, 0, 5000);
+    TH1F *hist_drift_flashed_TPC = new TH1F("drift_flashed_TPC", "Eff_hist_drift_flashed_TPC",  30, 0, 200);
 
     // neutrinos that are NOT reconstructed and SHOULD be reconstrcted: vertex inside TPC + NO OpFlash
-    TH1F *hist_Evis_lost = new TH1F("Evis_lost", "Eff_hist_Evis_lost",  30, 0, 5000);   
+    TH1F *hist_Enu_lost = new TH1F("Enu_lost", "Eff_hist_Enu_lost",  30, 0, 5000);   
     TH1F *hist_drift_lost = new TH1F("drift_lost", "Eff_hist_drift_lost",  30, 0, 200);
 
-
+    // Range of the histogram. Change accordingly to what you may want
+    double min_hist = -10.;
+    double max_hist = 16.;
     std::vector<TH1F*> hists;               // vector to save the distribution of OpHits ONLY WHEN A NEUTRINO IS LOST
     std::vector<TPaveText*> pts;            // vector to save the text
 
@@ -59,7 +64,7 @@ void Efficiency(){
 
     // Declaration of the files 
     std::vector<string> filenames;
-    filenames.push_back("/Users/carlosmm/Documents/Doctorado/ServiceTask/Task/Data/opana_tree.root");
+    filenames.push_back("/Users/carlosmm/Documents/Doctorado/ServiceTask/Task/Data/opana_tree_big.root");
 
     // Variables to manage the file and the directory of its tree
     TFile *input_file;
@@ -112,8 +117,9 @@ void Efficiency(){
         int num_neutrinos_true_TPC = 0;                  // number of true neutrinos inside the TPC in the event
         int num_neutrinos_lost = 0;                      // number of neutrinos in the event that do NOT have a corresponding OpFlash and the interaction vertex is inside the TPC    
 
-        double Evis;                    // visible energy of the neutrino interaction
+        double Enu;                    // visible energy of the neutrino interaction
         double drift;                   // drift distance of the neutrino interaction
+        bool nu_in_TPC;                 // boolean to know if the neutrino interaction is inside the TPC   
 
         int matched_ID = -1;               // ID of a particle of an interaction that matches with the OpFlash
         int previous_matched_ID = -1;      // previous matched ID to check if a neutrino produces 2 OpFlashes
@@ -122,111 +128,172 @@ void Efficiency(){
 
         // Loop over all entries of the TTree
         int num_events=event_tree->GetEntries();
-        for (int i=0; i<num_events; i++){
+        int Niters = num_events;
+        for (int i=0; i<Niters; i++){
             num_neutrinos_reco=0;    // Each event I reset the number of neutrinos that have been flashed
-            num_neutrinos_true=0; // Each event I reset the number of true neutrinos inside the TPC
+            num_neutrinos_true=0;    // Each event I reset the number of true neutrinos inside the TPC
+            nu_in_TPC=false;         // I reset the boolean that tells me if the neutrino interaction is inside the TPC
 
-            time_nu.clear(); // I reset the vector that saves the time of the neutrinos that have produced an OpFlash
-
-            cout<<endl<<"           -------- Event number: " << i << "------" <<endl<<endl;
-            
             // Get the entry 'i' of the event tree
             event_tree->GetEntry(i);
-            
-            // I loop over the particles to see the 'creation process' of each one
-            /*
-            for(int j=0; j<process->size(); j++){
-                if(process->at(j)=="primary" && trackID->at(j)<20000000){ // I only print the primary particles of the interaction that are not cosmics (cosmics have ID > 2e7)
-                    cout<<"Particle "<<trackID->at(j)<<" with PDG code "<<PDGcode->at(j)<<" was created by "<<process->at(j)<<endl;
-                    cout<<"      It was created at time: "<<MCP_time->at(j)/1000<<" mu-s"<<endl<<endl;
+
+            time_nu.clear(); // I reset the vector that saves the time of the neutrinos that have produced an OpFlash
+            for(int j=0; j<nuvX->size(); j++){
+                if( nuvX->at(j)>X_MIN && nuvX->at(j)<X_MAX && 
+                    nuvY->at(j)>Y_MIN && nuvY->at(j)<Y_MAX && 
+                    nuvZ->at(j)>Z_MIN && nuvZ->at(j)<Z_MAX)
+                {
+                    nu_in_TPC=true;
                 }
             }
-            cout<<endl<<endl;
-            */
-            
-            /////////////////////////////////////////////////////////////////////////////////////
-            ////// Calculate the # of neutrinos in the event that have produced an OpFlash //////
-            /////////////////////////////////////////////////////////////////////////////////////
-    
-            // Match the flashes with particles. See if they are neutrino
-            for(int j=0; j<nopflash; j++){
-                // I match the OpFlash with the interaction. SO FAR ONLY WORKS FOR NEUTRINO INTERACTIONS
-                matched_ID = OpFlash_interaction_matcher(flash_time->at(j), event_tree, i, nu_index);
 
-                cout<<"The ID match is: " <<matched_ID<<endl;
-                // I check if the interaction is neutrino
-                if(matched_ID<20000000 && matched_ID!=-1){ // The cosmics are the only particles with ID > 2e7. If no match is found, ID=-1
+            if(nu_in_TPC==true){
+                cout<<endl<<"           -------- Event number: " << i << "------" <<endl<<endl;
+        
+                // I loop over the particles to see the 'creation process' of each one
+                /*
+                for(int j=0; j<process->size(); j++){
+                    if(process->at(j)=="primary" && trackID->at(j)<20000000){ // I only print the primary particles of the interaction that are not cosmics (cosmics have ID > 2e7)
+                        cout<<"Particle "<<trackID->at(j)<<" with PDG code "<<PDGcode->at(j)<<" was created by "<<process->at(j)<<endl;
+                        cout<<"      It was created at time: "<<MCP_time->at(j)/1000<<" mu-s"<<endl<<endl;
+                    }
+                }
+                cout<<endl<<endl;
+                */
+                
+                /////////////////////////////////////////////////////////////////////////////////////
+                ////// Calculate the # of neutrinos in the event that have produced an OpFlash //////
+                /////////////////////////////////////////////////////////////////////////////////////
+        
+                // Match the flashes with particles. See if they are neutrino
+                for(int j=0; j<nopflash; j++){
+                    // I match the OpFlash with the interaction. SO FAR ONLY WORKS FOR NEUTRINO INTERACTIONS
+                    matched_ID = OpFlash_interaction_matcher(flash_time->at(j), event_tree, i, nu_index);
 
-                    cout<<"The matched neutrino is: "<<matched_ID<<" with index "<<nu_index<<endl;
+                    //cout<<"The ID match is: " <<matched_ID<<endl;
+                    // I check if the interaction is neutrino
+                    if(matched_ID<20000000 && matched_ID!=-1){ // The cosmics are the only particles with ID > 2e7. If no match is found, ID=-1
 
-                    // I NEED TO TAKE INTO ACCOUNT 1 NEUTRINO CAN PRODUCE 2 OPFLASHES IF IT CROSSES FROM 1 TPC TO ANOTHER
-                    if(matched_ID!=previous_matched_ID){  // I check if the neutrino has already produced an OpFlash
-                    
-                        num_neutrinos_reco++;    // Number of neutrinos that have produced an OpFlash IN THIS INTERACTION
+                        //cout<<"The matched neutrino is: "<<matched_ID<<" with index "<<nu_index<<endl;
+
+                        /*
+                        I need to take into account that:
+                        - 1 neutrino can produce 2 OpFlashes if it crosses from 1 TPC to another
+                        - There may be interactions with just 1 neutrino outside the TPC that produce an OpFlash.
+                            In this case, I do not want to count them out for the purity calculation
+                        */
+                        if(matched_ID!=previous_matched_ID){  // I check if the neutrino has already produced an OpFlash
                         
-                        // Find the Evis and drift of the neutrino that caused this interaction
-                        drift = 200 - std::abs(nuvX->at(nu_index));   // Distance of the particle with the anode plane in the drift axis 
-                        Evis = nuvE->at(nu_index) * 1000;             // Visible energy in MeV (nuvE is in GeV)
-
-                        // I fill the neutrino-only efficiency histograms
-                        hist_Evis_flashed->Fill(Evis);
-                        hist_drift_flashed->Fill(drift);
-                        num_neutrinos_flashed++;
-
-                        /////////////////////////////////////////////////////////////////////////////////////
-                        //////////////// Of these, see how many of them were inside the TPC /////////////////
-                        /////////////////////////////////////////////////////////////////////////////////////
-
-                        if(nuvX->at(nu_index)>X_MIN && nuvX->at(nu_index)<X_MAX && 
-                            nuvY->at(nu_index)>Y_MIN && nuvY->at(nu_index)<Y_MAX && 
-                            nuvZ->at(nu_index)>Z_MIN && nuvZ->at(nu_index)<Z_MAX){
+                            num_neutrinos_reco++;    // Number of neutrinos that have produced an OpFlash IN THIS INTERACTION
                             
+                            // Find the Enu and drift of the neutrino that caused this interaction
+                            drift = 200 - std::abs(nuvX->at(nu_index));   // Distance of the particle with the anode plane in the drift axis 
+                            Enu = nuvE->at(nu_index) * 1000;             // Visible energy in MeV (nuvE is in GeV)
+
+                            // I fill the neutrino-only efficiency histograms
+                            hist_Enu_flashed->Fill(Enu);
+                            hist_drift_flashed->Fill(drift);
+                            num_neutrinos_flashed++;
+
+                            /////////////////////////////////////////////////////////////////////////////////////
+                            //////////////// Of these, see how many of them were inside the TPC /////////////////
+                            /////////////////////////////////////////////////////////////////////////////////////
+
+                            if(nuvX->at(nu_index)>X_MIN && nuvX->at(nu_index)<X_MAX && 
+                                nuvY->at(nu_index)>Y_MIN && nuvY->at(nu_index)<Y_MAX && 
+                                nuvZ->at(nu_index)>Z_MIN && nuvZ->at(nu_index)<Z_MAX)
+                                {
+                                
+                                // I fill the neutrino-only efficiency histograms for neutrinos inside the TPC
+                                hist_Enu_flashed_TPC->Fill(Enu);
+                                hist_drift_flashed_TPC->Fill(drift);
+                                num_neutrinos_flashed_TPC++;
+
+
+                                // I save in a vector the time nuvT of this neutrino
+                                time_nu.push_back(nuvT->at(nu_index)); // I save the time of the neutrino that has produced an OpFlash
+                            }
+                        }
+
+                    }else{  // In case it is not a neutrino
+                        matched_ID=previous_matched_ID; // I keep the previous matched ID if the current one is not a neutrino. this way I always save the last matched neutrino interaction
+                    }
+                    // I save the previous matched ID to check if a neutrino produces 2 OpFlashes (and not count it twice)
+                    previous_matched_ID = matched_ID;
+                }
+
+                // I fill the efficiency histograms for ALL the neutrino, also the ones that have not been flashed
+                for (int k=0; k<nuvE->size(); k++){
+
+                    if(nuvX->at(k)>X_MIN && nuvX->at(k)<X_MAX && 
+                    nuvY->at(k)>Y_MIN && nuvY->at(k)<Y_MAX && 
+                    nuvZ->at(k)>Z_MIN && nuvZ->at(k)<Z_MAX){
+                        num_neutrinos_true++; // I add the number of real (true) neutrinos in the event that happened inside the TPC
+
+                        Enu = nuvE->at(k) * 1000;             // Visible energy in MeV (nuvE is in GeV)
+                        drift = 200 - std::abs(nuvX->at(k));   // Distance of the particle with the anode plane in the drift axis 
+
+                        // Fill the histograms
+                        hist_Enu_true_TPC->Fill(Enu);
+                        hist_drift_true_TPC->Fill(drift);
+                        num_neutrinos_true_TPC++;
+
+                        // I check if the neutrino has been found in the previous loop
+                        if( std::find(time_nu.begin(), time_nu.end(), nuvT->at(k)) == time_nu.end() ){
+                            // If the time of this neutrino is not in the vector, it means it has not produced any OpFlash
+                            // I fill the histograms of lost neutrinos
+                            hist_Enu_lost->Fill(Enu);
+                            hist_drift_lost->Fill(drift);
+                            num_neutrinos_lost++;
+                        }
+                    }
+                } 
+            } // Finish if(nu_in_TCPC==true)
+
+            
+
+            /*
+            I take into account that:
+            Very usually, the interaction will have only >=1 neutrino that interacts outside the TPC
+            In this case, num_neutrinos_true == 0 and num_neutrinos_reco >= 1 (they produce enough light inside the detector)
+            If this happens (num_neutrinos_true == 0 and num_neutrinos_reco == 1), I do NOT want to plot the distribution of OpHits, since it is not a lost neutrino
+            And I also do NOT want to take into account them for the purity calculation
+            */
+           /*
+           previous_matched_ID=-1; // I reset the previous matched ID to -1 for the next loop
+            if(num_neutrinos_true==0 && num_neutrinos_reco>=1){
+
+                for(int j=0; j<nopflash; j++){
+                    // I match the OpFlash with the interaction. SO FAR ONLY WORKS FOR NEUTRINO INTERACTIONS
+                    matched_ID = OpFlash_interaction_matcher(flash_time->at(j), event_tree, i, nu_index);
+
+                    // I check if the interaction is neutrino
+                    if(matched_ID<20000000 && matched_ID!=-1){ // The cosmics are the only particles with ID > 2e7. If no match is found, ID=-1
+
+                        if(matched_ID!=previous_matched_ID){
+                            num_neutrinos_true++; // I add the number of real (true) neutrinos in the event that happened inside the TPC, even tough it is outside in this case
+                            // I get the information of the neutrino that caused this interaction OUTSIDE of the TPC
+                            drift = 200 - std::abs(nuvX->at(nu_index));   // Distance of the particle with the anode plane in the drift axis 
+                            Enu = nuvE->at(nu_index) * 1000;             // Visible energy in MeV (nuvE is in GeV)
+
                             // I fill the neutrino-only efficiency histograms for neutrinos inside the TPC
-                            hist_Evis_flashed_TPC->Fill(Evis);
+                            hist_Enu_flashed_TPC->Fill(Enu);
                             hist_drift_flashed_TPC->Fill(drift);
                             num_neutrinos_flashed_TPC++;
 
-                            // I save in a vector the time nuvT of this neutrino
-                            time_nu.push_back(nuvT->at(nu_index)); // I save the time of the neutrino that has produced an OpFlash
-
+                            // I fill the histograms with the true neutrinos inside the TPC even though it is outside in this case
+                            hist_Enu_true_TPC->Fill(Enu);
+                            hist_drift_true_TPC->Fill(drift);
+                            num_neutrinos_true_TPC++;
                         }
+                    }else{  // In case it is not a neutrino
+                        matched_ID=previous_matched_ID; // I keep the previous matched ID if the current one is not a neutrino. this way I always save the last matched neutrino interaction
                     }
-
-                }else{  // In case it is not a neutrino
-                    matched_ID=previous_matched_ID; // I keep the previous matched ID if the current one is not a neutrino. this way I always save the last matched neutrino interaction
-                }
-                // I save the previous matched ID to check if a neutrino produces 2 OpFlashes (and not count it twice)
-                previous_matched_ID = matched_ID;
-            }
-
-            // I fill the efficiency histograms for ALL the neutrino, also the ones that have not been flashed
-            for (int k=0; k<nuvE->size(); k++){
-
-                if(nuvX->at(k)>X_MIN && nuvX->at(k)<X_MAX && 
-                   nuvY->at(k)>Y_MIN && nuvY->at(k)<Y_MAX && 
-                   nuvZ->at(k)>Z_MIN && nuvZ->at(k)<Z_MAX){
-                    num_neutrinos_true++; // I add the number of real (true) neutrinos in the event that happened inside the TPC
-
-                    Evis = nuvE->at(k) * 1000;             // Visible energy in MeV (nuvE is in GeV)
-                    drift = 200 - std::abs(nuvX->at(k));   // Distance of the particle with the anode plane in the drift axis 
-
-                    // Fill the histograms
-                    hist_Evis_true_TPC->Fill(Evis);
-                    hist_drift_true_TPC->Fill(drift);
-                    num_neutrinos_true_TPC++;
-
-                    // I check if the neutrino has been found in the previous loop
-                    if( std::find(time_nu.begin(), time_nu.end(), nuvT->at(k)) == time_nu.end() ){
-                        // If the time of this neutrino is not in the vector, it means it has not produced any OpFlash
-
-                        // I fill the histograms of lost neutrinos
-                        hist_Evis_lost->Fill(Evis);
-                        hist_drift_lost->Fill(drift);
-                        num_neutrinos_lost++;
-                    }
-                }
-            }
-            
+                    // I save the previous matched ID to check if a neutrino produces 2 OpFlashes (and not count it twice)
+                    previous_matched_ID = matched_ID;
+                } // End of the loop in OpFlashes
+            } 
+            */
             // I have finished calculating the variables for the efficiency plots for this event
             cout<<"----- Efficiency stats: -----"<<endl;
 
@@ -236,11 +303,7 @@ void Efficiency(){
             cout<<"LOST RATIO: "<<(double)num_neutrinos_lost/(double)num_neutrinos_true_TPC * 100<<" %"<<endl;
 
             // In case I lose a neutrino, plot the distribution of OpHits to see why and how
-            if(num_neutrinos_true_TPC!=num_neutrinos_flashed_TPC){
-
-                // Range of the histogram. Change accordingly to what you may want
-                double min_hist = -10.;
-                double max_hist = 10.;
+            if(num_neutrinos_true!=num_neutrinos_reco && num_neutrinos_true!=0){
 
                 // Create a NEW histogram for this event
                 TString hname = Form("Histogram_%d", i);
@@ -260,19 +323,32 @@ void Efficiency(){
 
                 // I write the number of OpFlashes in each histogram (each event)
                 // Define the box position in NDC (normalized device coordinates)
-                TPaveText *pt = new TPaveText(0.6, 0.84, 0.9, 0.9, "NDC");  
+                TPaveText *pt = new TPaveText(0.6, 0.75, 0.9, 0.9, "NDC");  
                 pt->SetFillColor(0);   // transparent background
                 pt->SetBorderSize(1);  // small border
                 pt->SetTextSize(0.02);
                 pt->SetTextAlign(12);
 
                 // Build the message
-                std::string msg_2 = "# Event: " + std::to_string(i);
-                std::string msg_3 = "# Neutrinos in event: " + std::to_string(nuvE->size());
+                std::string msg_1 = "# Event: " + std::to_string(i);
+                std::string msg_2 = "# Neutrinos in event: " + std::to_string(num_neutrinos_true);
+
+                // I say if there was an InTimeCosmic in the event
+                std::string InTimeCosmic_Str;
+                if (InTimeCosmics==true) {
+                    InTimeCosmic_Str= "true";
+                    cout<<"   There was an InTimeCosmic in the event"<<endl<<endl<<endl<<endl<<endl;
+                } else {
+                    InTimeCosmic_Str = "false";
+                }
+                std::string msg_3 = std::string("# There is InTimeCosmic: ") + InTimeCosmic_Str;
+                std::string msg_4 = std::string("# Neutrinos reconstructed: ") + std::to_string(num_neutrinos_reco);
 
                 // Add text line
+                pt->AddText(msg_1.c_str());
                 pt->AddText(msg_2.c_str());
                 pt->AddText(msg_3.c_str());
+                pt->AddText(msg_4.c_str());
 
 
                 // I fill the vector with the histogram and TPaveText of each event
@@ -318,72 +394,72 @@ void Efficiency(){
         // Efficiency
         TH1F *hist_efficiency_drift = (TH1F*) hist_drift_flashed_TPC->Clone("hist_efficiency_drift");
         hist_efficiency_drift->SetTitle("Efficiency vs drift");
-        TH1F *hist_efficiency_Evis = (TH1F*) hist_Evis_flashed_TPC->Clone("hist_efficiency_Evis");
-        hist_efficiency_Evis->SetTitle("Efficiency vs Evis");
+        TH1F *hist_efficiency_Enu = (TH1F*) hist_Enu_flashed_TPC->Clone("hist_efficiency_Enu");
+        hist_efficiency_Enu->SetTitle("Efficiency vs Enu");
 
         // Purity
         TH1F *hist_purity_drift = (TH1F*) hist_drift_flashed_TPC->Clone("hist_purity_drift");
         hist_purity_drift->SetTitle("Purity vs drift");
-        TH1F *hist_purity_Evis = (TH1F*) hist_Evis_flashed_TPC->Clone("hist_purity_Evis");
-        hist_purity_Evis->SetTitle("Purity vs Evis");
+        TH1F *hist_purity_Enu = (TH1F*) hist_Enu_flashed_TPC->Clone("hist_purity_Enu");
+        hist_purity_Enu->SetTitle("Purity vs Enu");
 
         // Fraction of lost neutrinos
         TH1F *hist_drift_lost_ratio = (TH1F*) hist_drift_lost->Clone("hist_drift_lost_ratio");  
         hist_drift_lost_ratio->SetTitle("Fraction of lost neutrinos vs drift");
-        TH1F *hist_Evis_lost_ratio = (TH1F*) hist_Evis_lost->Clone("hist_Evis_lost_ratio");
-        hist_Evis_lost_ratio->SetTitle("Fraction of lost neutrinos vs Evis");
+        TH1F *hist_Enu_lost_ratio = (TH1F*) hist_Enu_lost->Clone("hist_Enu_lost_ratio");
+        hist_Enu_lost_ratio->SetTitle("Fraction of lost neutrinos vs Enu");
 
         // Perform bin-by-bin division
         // Efficiency
         hist_efficiency_drift->Divide(hist_drift_true_TPC);
-        hist_efficiency_Evis->Divide(hist_Evis_true_TPC);
+        hist_efficiency_Enu->Divide(hist_Enu_true_TPC);
 
         // Purity
         hist_purity_drift->Divide(hist_drift_flashed);
-        hist_purity_Evis->Divide(hist_Evis_flashed);
+        hist_purity_Enu->Divide(hist_Enu_flashed);
 
         // Lost neutrinos
         hist_drift_lost_ratio->Divide(hist_drift_true_TPC);
-        hist_Evis_lost_ratio->Divide(hist_Evis_true_TPC);
+        hist_Enu_lost_ratio->Divide(hist_Enu_true_TPC);
 
         // Now the histograms are ready to be tuned and saved
         TuneHist(hist_efficiency_drift);
         hist_efficiency_drift->GetXaxis()->SetTitle("Drift distance neutrino vertex (cm)");
         hist_efficiency_drift->GetYaxis()->SetTitle("Efficiency");
 
-        TuneHist(hist_efficiency_Evis);
-        hist_efficiency_Evis->GetXaxis()->SetTitle("Neutrino energy (MeV)");
-        hist_efficiency_Evis->GetYaxis()->SetTitle("Efficiency");
+        TuneHist(hist_efficiency_Enu);
+        hist_efficiency_Enu->GetXaxis()->SetTitle("Neutrino energy (MeV)");
+        hist_efficiency_Enu->GetYaxis()->SetTitle("Efficiency");
 
         TuneHist(hist_purity_drift);
         hist_purity_drift->GetXaxis()->SetTitle("Drift distance neutrino vertex (cm)");
         hist_purity_drift->GetYaxis()->SetTitle("Purity");
 
-        TuneHist(hist_purity_Evis);
-        hist_purity_Evis->GetXaxis()->SetTitle("Neutrino energy (MeV)");
-        hist_purity_Evis->GetYaxis()->SetTitle("Purity");
+        TuneHist(hist_purity_Enu);
+        hist_purity_Enu->GetXaxis()->SetTitle("Neutrino energy (MeV)");
+        hist_purity_Enu->GetYaxis()->SetTitle("Purity");
 
         TuneHist(hist_drift_lost_ratio);
         hist_drift_lost_ratio->GetXaxis()->SetTitle("Drift distance neutrino vertex (cm)");
         hist_drift_lost_ratio->GetYaxis()->SetTitle("Fraction lost neutrinos");
 
-        TuneHist(hist_Evis_lost_ratio);
-        hist_Evis_lost_ratio->GetXaxis()->SetTitle("Neutrino energy (MeV)");
-        hist_Evis_lost_ratio->GetYaxis()->SetTitle("Fraction lost neutrinos");
+        TuneHist(hist_Enu_lost_ratio);
+        hist_Enu_lost_ratio->GetXaxis()->SetTitle("Neutrino energy (MeV)");
+        hist_Enu_lost_ratio->GetYaxis()->SetTitle("Fraction lost neutrinos");
 
         // I save the histograms
         hist_efficiency_drift->Draw("pe");
         c1->SaveAs("Efficiency/Efficiency_drift.pdf");
-        hist_efficiency_Evis->Draw("pe");
-        c1->SaveAs("Efficiency/Efficiency_Evis.pdf");
+        hist_efficiency_Enu->Draw("pe");
+        c1->SaveAs("Efficiency/Efficiency_Enu.pdf");
         hist_purity_drift->Draw("pe");
         c1->SaveAs("Efficiency/Purity_drift.pdf");
-        hist_purity_Evis->Draw("pe");
-        c1->SaveAs("Efficiency/Purity_Evis.pdf");
+        hist_purity_Enu->Draw("pe");
+        c1->SaveAs("Efficiency/Purity_Enu.pdf");
         hist_drift_lost_ratio->Draw("pe");
         c1->SaveAs("Efficiency/LostNeutrinos_drift.pdf");
-        hist_Evis_lost_ratio->Draw("pe");
-        c1->SaveAs("Efficiency/LostNeutrinos_Evis.pdf");
+        hist_Enu_lost_ratio->Draw("pe");
+        c1->SaveAs("Efficiency/LostNeutrinos_Enu.pdf");
 
     } // Finish loop over files
 
@@ -416,9 +492,11 @@ void Efficiency(){
             arrows.at(k).at(h)->SetY2(arrow_y);
 
             // Draw on canvas
-            lines_start.at(k).at(h)->Draw("same");
-            lines_finish.at(k).at(h)->Draw("same");
-            arrows.at(k).at(h)->Draw("same");
+            if(lines_start.at(k).at(h)->GetY1()>min_hist && lines_start.at(k).at(h)->GetY1()<max_hist){  // I only draw the lines if they are in the range of the histogram
+                lines_start.at(k).at(h)->Draw("same");
+                lines_finish.at(k).at(h)->Draw("same");
+                arrows.at(k).at(h)->Draw("same");
+            }
         }
 
         // I save the histogram

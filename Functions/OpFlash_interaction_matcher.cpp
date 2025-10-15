@@ -30,15 +30,6 @@ int OpFlash_interaction_matcher(double OpFlash_time, TTree* tree, int i, int &nu
 
             double int_time = MCP_time->at(j)/1000.;  // Get the time of the j-th interaction in mu-s
             
-            
-                /*
-                cout<<"The OpFlash time is: "<<OpFlash_time<<" mu-s. " <<endl<<
-                "       The interaction time is: "<<int_time<<" mu-s"<<endl<<endl;
-                */
-            
-                     
-            
-
             // Check if the OpFlash time is within a certain window of the MCTruth time
             if (std::abs(OpFlash_time - int_time) < TIME_WINDOW) {  // 10.0 ns window to check if this is the interaction    
                 gen_ID = trackID->at(j);  // Match found, store the ID
@@ -48,12 +39,12 @@ int OpFlash_interaction_matcher(double OpFlash_time, TTree* tree, int i, int &nu
 
     if( gen_ID<20000000 && gen_ID != -1 ){
         // I look for the index of the neutrino that caused the interaction
-        cout<<"LOOKING FOR THE NEUTRINO INDEX"<<endl;
+        //cout<<"LOOKING FOR THE NEUTRINO INDEX"<<endl;
         for(int k=0; k<nuvE->size(); k++){
             nu_time = nuvT->at(k)/1000.; // time of the neutrino interaction in mu-s
 
-            cout<<"   Neutrino index "<<k<<" with time "<<nu_time<<" mu-s"<<endl;
-            cout<<"       The OpFlash time is: "<<OpFlash_time<<" mu-s"<<endl;
+            //cout<<"   Neutrino index "<<k<<" with time "<<nu_time<<" mu-s"<<endl;
+            //cout<<"       The OpFlash time is: "<<OpFlash_time<<" mu-s"<<endl;
 
             if( std::abs(nu_time-OpFlash_time) < TIME_WINDOW){ // I compare the time of the neutrino interaction with the time of the interaction
                 nu_index = k; // I store the index of the neutrino that caused the interaction
