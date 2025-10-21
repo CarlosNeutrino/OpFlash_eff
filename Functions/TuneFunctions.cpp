@@ -19,15 +19,42 @@ void TuneHist(TH1F* hist){
     hist->SetMarkerSize(0.);
 
     hist->SetLineColor(kBlue);
-    hist->SetFillColorAlpha(kBlue-3, 0.75);
+    hist->SetFillColorAlpha(kAzure-8, 0.75);
 
     hist->GetXaxis()->SetTitle("Absolute time (#mu s)");
     hist->GetYaxis()->SetTitle("# photo-electrons (all channels)");
 
     hist->GetXaxis()->SetTitleOffset(0.88);  // Adjust the offset of the X-axis title
-    hist->GetYaxis()->SetTitleOffset(1.3);  // Adjust the offset of the Y-axis title
+    hist->GetYaxis()->SetTitleOffset(1.2);  // Adjust the offset of the Y-axis title
     
 }
+
+void TuneHist_eff(TH1F* hist){
+    hist->SetStats(0);
+
+    hist->GetXaxis()->SetTitleSize(0.07);
+    hist->GetYaxis()->SetTitleSize(0.07);
+    hist->GetXaxis()->SetLabelSize(0.062);
+    hist->GetYaxis()->SetLabelSize(0.062);
+
+    hist->SetLineStyle(1);
+    hist->SetLineWidth(2);
+    hist->SetFillStyle(1001);       //1001-->filling, 0-->no filling 
+    hist->SetMarkerColor(kBlack);
+    hist->SetMarkerStyle(21);
+    hist->SetMarkerSize(0.);
+
+    hist->SetLineColor(kBlue);
+    hist->SetFillColorAlpha(kAzure-8, 0.75);
+
+    hist->GetXaxis()->SetTitle("Absolute time (#mu s)");
+    hist->GetYaxis()->SetTitle("# photo-electrons (all channels)");
+
+    hist->GetXaxis()->SetTitleOffset(0.88);  // Adjust the offset of the X-axis title
+    hist->GetYaxis()->SetTitleOffset(0.7);  // Adjust the offset of the Y-axis title
+    
+}
+
 
 // Function to tune the plots (TF1)
 
@@ -44,6 +71,12 @@ void TuneLine_finish(TLine* l){
     l->SetLineColor(kRed);
     l->SetLineStyle(2);         // Dashed line
     l->SetLineWidth(1);
+}
+
+void TuneLine_eff(TLine* l){
+    l->SetLineColor(kRed);
+    l->SetLineStyle(2);         
+    l->SetLineWidth(2);
 }
 
 // functions to tune the arrows
