@@ -45,7 +45,7 @@ double IntX, IntY, IntZ;       // coordinates of the interaction vertex
 double InteractionTime;          // Time of the interaction. If it is a cosmic, when time it is inside the detector
 double VisEnT0;                  // First time when the particle is inside the detector (time of the first energy deposition)
 double VisEnMaxT;                // Final time when the particle is inside the detector (time of the last energy deposition)
-double VisEnMaxTContained;       // (?) Final time light is causde in the interaction 
+double VisEnMaxTContained;       // (?) Final time light is produced in the interaction 
 bool DirtInteraction;            // neutrino Interaction happens outside the detector
 
 bool CoincidentInteraction;      // boolean for the case in which there are 2 interactions coincideny: their veto would collide --> they do NOT create different OpFlashes

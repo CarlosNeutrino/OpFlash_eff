@@ -1,7 +1,7 @@
 /*
 
------------------------------- AnalyzeReco ------------------------------           
-        Created by carlos Martín Morales on september 9th 2025
+------------------------------ PDS analyzer ------------------------------           
+                        Created by Francisco Nicolás 
 */
 
 #include "Includes.h"       // ROOT related includes + using namespace std
@@ -72,8 +72,8 @@ std::vector<std::string>* process = nullptr;               // Primary process of
 std::vector<int>* trackID = nullptr;                       // MC particle ID
 std::vector<int>* motherID = nullptr;                      // ID of the mother MC particle
 std::vector<int>* PDGcode = nullptr;                       // PDG code
-bool InTimeCosmics;                        // Returns true if there is a cosmic interaction during the BNB spill
-bool InTimeCosmicsTime;                  // Time (in ns) of the InTime-cosmic interaction
+bool InTimeCosmics;                      // Returns true if there is a cosmic interaction during the BNB spill ??
+bool InTimeCosmicsTime;                  // Time (in ns) of the InTime-cosmic interaction ??
 
 // Start and end momenta of each MC particle at the g4 stage
 std::vector<double>* StartPx = nullptr;   
@@ -100,8 +100,8 @@ std::vector<double>* dEpromZ = nullptr;
 std::vector<double>* dEspreadX = nullptr;                         // X, Y, Z standard deviation of the energy depositions. It's saved for the two TPCs (vector size is 2)
 std::vector<double>* dEspreadY = nullptr;
 std::vector<double>* dEspreadZ = nullptr;
-std::vector<std::vector<double>>* dElowedges = nullptr;           // X, Y, Z coordinates of the lowest (max) energy deposition. It's saved for the two TPCs (vector size is 2)
-std::vector<std::vector<double>>* dEmaxedges = nullptr;           // X, Y, Z coordinates of the lowest (max) energy deposition. It's saved for the two TPCs (vector size is 2)
+std::vector<std::vector<double>>* dElowedges = nullptr;           // X, Y, Z coordinates of the lowest energy deposition. It's saved for the two TPCs (vector size is 2)
+std::vector<std::vector<double>>* dEmaxedges = nullptr;           // X, Y, Z coordinates of the maximum energy deposition. It's saved for the two TPCs (vector size is 2)
 
 // Scintillation photons
 /*

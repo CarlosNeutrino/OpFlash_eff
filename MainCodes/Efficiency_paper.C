@@ -1,7 +1,3 @@
-/*
-Code for plotting cout'ing some correlations between flash variables and interactions (cosmic, neutrino, michelle e-)
-*/
-
 // INCLUDES
 // Definition of the variables of the tree
 #include "/Users/carlosmm/Documents/Doctorado/ServiceTask/Task/tree_definitions_light/tree_utils_matcher.cpp"
@@ -17,8 +13,8 @@ void Efficiency_paper(){
     // Declaration of the canvas
     TCanvas *c1= new TCanvas("name", "Efficiency", 1000, 800);  
 
-    // I create 2 pads in the canvas
     /*
+    I create 2 pads in the canvas
     - The one on top to show the # of events
     - The one below to show the efficiency
     */
@@ -67,7 +63,7 @@ void Efficiency_paper(){
     std::vector<std::vector<TArrow*>> arrows;            // arrow between the beginnig and the end of the OpFlash
     std::vector<TArrow*> arrows_ev;                      // auxiliary vector to save the above one
 
-    // declaration of the OpAna TTree
+    // declaration of the TTrees
     TTree *event_tree;
     TTree *header_tree;
 
@@ -80,9 +76,9 @@ void Efficiency_paper(){
     TFile *input_file;
     TDirectoryFile *tree_dir;
 
-     for(string file : filenames){
+    for(string file : filenames){
 
-        // Interactions that have a flash
+        // Resetting the histograms for the different files
         hist_Evis_flash->Reset();
         hist_xdrift_flash->Reset();
         hist_Evis_all->Reset();
@@ -99,15 +95,10 @@ void Efficiency_paper(){
 
         // Get the directory 'ana' inside the file
 
-
-
         tree_dir = (TDirectoryFile*)input_file->Get("flashrecoeff");
         // Get the event tree from the 'opanatree' directory
         event_tree =(TTree*)tree_dir->Get("FlashRecoEff");
         header_tree =(TTree*)tree_dir->Get("FlashRecoEffHeader");
-
-
-
 
         // I use the code in tree_utils.cpp to initialyze all the variables inside the TTrees. Look at tree_utils.cpp fro more info.
         set_branch_Light(event_tree);
@@ -150,52 +141,46 @@ void Efficiency_paper(){
         // Loop over all entries of the TTree
         int num_events=event_tree->GetEntries();
         int Niters = num_events;
-        for (int i=0; i<Niters; i++){
-            num_interactions_flash=0;    // Each event I reset the number of neutrinos that have been flashed
-            num_interactions_true=0;    // Each event I reset the number of true neutrinos inside the TPC
+            for (int i=0; i<Niters; i++){
+                num_interactions_flash=0;    // Each event I reset the number of neutrinos that have been flashed
+                num_interactions_true=0;    // Each event I reset the number of true neutrinos inside the TPC
 
-            // Get the entry 'i' of the event tree
-            event_tree->GetEntry(i);
-            cout<<endl<<endl<<"           -------- Event number: " << i << "------" <<endl;
-            // Each entry of the tree is an MCTruth object (1 truth interaction)
-            
-            ////////////////////////////////////////////////////////////////////////////////////////
-            ////// Calculate the # of interactions in the event that have produced an OpFlash //////
-            ////////////////////////////////////////////////////////////////////////////////////////
-    
-            // Match the flashes with particles. See if they are neutrino
-            cout<<"   Number of flashes in the event: "<<NFlash<<endl;
-
-            // Calculate the (weighted) drift coordinate end visible energy
-            Evis = DepositedEnergy;
-            drift = abs(dEPromX);
-            //cout<<"   ---- Flash number "<<j<<" ----"<<endl;
-            cout<<"       Visible energy of the interaction: "<<Evis<<" MeV"<<endl;
-            cout<<"       Drift distance of the interaction: "<<drift<<" cm"<<endl;
-
-            if(RecoFlash==true){
-                // I fill the histograms of flashed neutrinos
-                hist_Evis_flash->Fill(Evis);
-                hist_xdrift_flash->Fill(drift);
-
-                num_interactions_flash++;
-                total_num_flashed_interactions++;
-
-                // I save the time of the OpFlash
-                FlashTime_v.push_back(FlashTime);
+                // Get the entry 'i' of the event tree
+                event_tree->GetEntry(i);
+                if(i%10000==0)  cout<<endl<<endl<<"           -------- Event number: " << i << "------" <<endl;
+                // Each entry of the tree is an MCTruth object (1 truth interaction)
                 
-            }
-            // In any case, the 'all' histograms are filled here
-            hist_Evis_all->Fill(Evis);
-            hist_xdrift_all->Fill(drift);
-            total_num_interactions++;
-            num_interactions_true++;
+                ////////////////////////////////////////////////////////////////////////////////////////
+                ////// Calculate the # of interactions in the event that have produced an OpFlash //////
+                ////////////////////////////////////////////////////////////////////////////////////////
+                if(abs(InteractionTime)<1.3e6){
+                    // Calculate the (weighted) drift coordinate and visible energy
+                    Evis = DepositedEnergy;
+                    drift = abs(dEPromX);
 
-            // I save the time of the interaction
-            InteractionTime_v.push_back(InteractionTime);
+                    // Case in which there is an OpFlash corresponding to the interaction
+                    if(RecoFlash==true){
+                        // I fill the histograms of flashed interactions
+                        hist_Evis_flash->Fill(Evis);
+                        hist_xdrift_flash->Fill(drift);
 
+                        num_interactions_flash++;
+                        total_num_flashed_interactions++;
 
-        } // End loop over entries in the TTree
+                        // I save the time of the OpFlash
+                        FlashTime_v.push_back(FlashTime);
+                        
+                    }   
+                    // In any case, the 'all' histograms are filled here
+                    hist_Evis_all->Fill(Evis);
+                    hist_xdrift_all->Fill(drift);
+                    total_num_interactions++;
+                    num_interactions_true++;
+         
+                    // I save the time of the interaction
+                    InteractionTime_v.push_back(InteractionTime);      
+                }
+            } // End loop over entries in the TTree
 
         // Print the efficiency
         cout<<endl<<"----- Efficiency stats: -----"<<endl;
@@ -225,94 +210,156 @@ void Efficiency_paper(){
         hist_efficiency_Evis->GetYaxis()->SetTitle("Efficiency");
 
         if(file.find("OldMC") != std::string::npos){
+            // Show the number of events
+            TPaveText *pt1 = new TPaveText(0.7, 0.8, 0.9, 0.9, "NDC");  
+            pt1->SetFillColor(0);   // transparent background
+            pt1->SetBorderSize(1);  // small border
+            pt1->SetTextSize(0.05);
+            pt1->SetTextAlign(12);
+            std::string msg1 = "# Events: " + std::to_string((int)hist_xdrift_all->GetEntries());
+            // Add text line
+            pt1->AddText(msg1.c_str());
+
+            // Show the efficiency
+            TPaveText *pt2 = new TPaveText(0.7, 0.8, 0.9, 0.9, "NDC");  
+            pt2->SetFillColor(0);   // transparent background
+            pt2->SetBorderSize(1);  // small border
+            pt2->SetTextSize(0.05);
+            pt2->SetTextAlign(12);
+            // show the efficiency with 2 decimals
+            double efficiency = (double)total_num_flashed_interactions / (double)total_num_interactions * 100.0;
+            std::ostringstream oss;
+            oss << std::fixed << std::setprecision(2) << efficiency;  // two decimals
+            std::string msg2 = "Efficiency: " + oss.str() + "%";
+            pt2->AddText(msg2.c_str());
+
             // Plot the # of events
             pad1->cd();
             pad1->SetLogy();  // log scale only on the event histogram pad
             TuneHist(hist_xdrift_all);
+            hist_xdrift_all->GetYaxis()->SetMoreLogLabels();
             hist_xdrift_all->SetTitle("Old MC");
             hist_xdrift_all->GetXaxis()->SetTitle("");
             hist_xdrift_all->GetYaxis()->SetTitle("# Events");
             hist_xdrift_all->Draw("hist");
+            pt1->Draw("SAME");
             
             // Plot the efficiency
             pad2->cd();
+            pad2->SetGrid();          // enables both x and y grids
             hist_efficiency_drift->SetTitle("Efficiency");
             hist_efficiency_drift->GetYaxis()->SetTitle("Efficiency");
             hist_efficiency_drift->Draw("E3");   // shadow
             hist_efficiency_drift->Draw("P SAME");  // points on top
-            hist_efficiency_drift->SetMinimum(0.7);
+            hist_efficiency_drift->SetMinimum(0.8);
             hist_efficiency_drift->SetMaximum(1.1);
 
             TLine* l1 = new TLine(0, 1, 200, 1);            // Line to show the efficiency=1
             TuneLine_eff(l1);
             l1->Draw("SAME");
+            pt2->Draw("SAME");
             c1->SaveAs("Efficiency_all/OldMC/Efficiency_drift.pdf");
 
             // Plot the # of events
             pad1->cd();
             pad1->SetLogy();  // log scale only on the event histogram pad
             TuneHist(hist_Evis_all);
+            hist_Evis_all->GetYaxis()->SetMoreLogLabels();
             hist_Evis_all->SetTitle("Old MC");
             hist_Evis_all->GetXaxis()->SetTitle("");
             hist_Evis_all->GetYaxis()->SetTitle("# Events");
             hist_Evis_all->Draw("hist");
+            pt1->Draw("SAME");
 
             // Plot the efficiency
             pad2->cd();
+            pad2->SetGrid();          // enables both x and y grids
             hist_efficiency_Evis->SetTitle("Efficiency");
             hist_efficiency_Evis->GetYaxis()->SetTitle("Efficiency");
             hist_efficiency_Evis->Draw("E3");   // shadow
             hist_efficiency_Evis->Draw("P SAME");  // points on top  
-            hist_efficiency_Evis->SetMinimum(0.6);
-            hist_efficiency_Evis->SetMaximum(1.1);
+            hist_efficiency_Evis->SetMinimum(0.7);
+            hist_efficiency_Evis->SetMaximum(1.3);
 
             TLine* l2 = new TLine(0, 1, 2000, 1);            // Line to show the efficiency=1
             TuneLine_eff(l2);     
             l2->Draw("SAME");
+            pt2->Draw("SAME");
             c1->SaveAs("Efficiency_all/OldMC/Efficiency_Evis.pdf");
         }else if(file.find("NewMC") != std::string::npos){
+            // Show the number of events
+            TPaveText *pt1 = new TPaveText(0.7, 0.8, 0.9, 0.9, "NDC");  
+            pt1->SetFillColor(0);   // transparent background
+            pt1->SetBorderSize(1);  // small border
+            pt1->SetTextSize(0.05);
+            pt1->SetTextAlign(12);
+            std::string msg1 = "# Events: " + std::to_string((int)hist_xdrift_all->GetEntries());
+            // Add text line
+            pt1->AddText(msg1.c_str());
+
+            // Show the efficiency
+            TPaveText *pt2 = new TPaveText(0.7, 0.8, 0.9, 0.9, "NDC");  
+            pt2->SetFillColor(0);   // transparent background
+            pt2->SetBorderSize(1);  // small border
+            pt2->SetTextSize(0.05);
+            pt2->SetTextAlign(12);
+            // show the efficiency with 2 decimals
+            double efficiency = (double)total_num_flashed_interactions / (double)total_num_interactions * 100.0;
+            std::ostringstream oss;
+            oss << std::fixed << std::setprecision(2) << efficiency;  // two decimals
+            std::string msg2 = "Efficiency: " + oss.str() + "%";
+            pt2->AddText(msg2.c_str());
+
             // Plot the # of events
             pad1->cd();
             pad1->SetLogy();  // log scale only on the event histogram pad
             TuneHist(hist_xdrift_all);
+            hist_xdrift_all->GetYaxis()->SetMoreLogLabels();
             hist_xdrift_all->SetTitle("Realistic MC");
             hist_xdrift_all->GetXaxis()->SetTitle("");
             hist_xdrift_all->GetYaxis()->SetTitle("# Events");
             hist_xdrift_all->Draw("hist");
+            pt1->Draw("SAME");
 
             // Plot the efficiency
             pad2->cd();
+            pad2->SetGrid();          // enables both x and y grids
             hist_efficiency_drift->SetTitle("Efficiency");
             hist_efficiency_drift->Draw("E3");   // shadow
             hist_efficiency_drift->Draw("P SAME");  // points on top
-            hist_efficiency_drift->SetMinimum(0.7);
+            hist_efficiency_drift->SetMinimum(0.8);
             hist_efficiency_drift->SetMaximum(1.1);
 
             TLine* l1 = new TLine(0, 1, 200, 1);            // Line to show the efficiency=1
             TuneLine_eff(l1);
             l1->Draw("SAME");
+            pt2->Draw("SAME");
             c1->SaveAs("Efficiency_all/NewMC/Efficiency_drift.pdf");
 
             // Plot the # of events
             pad1->cd();
             pad1->SetLogy();  // log scale only on the event histogram pad
             TuneHist(hist_Evis_all);
+            hist_Evis_all->GetYaxis()->SetMoreLogLabels();
             hist_Evis_all->SetTitle("Realistic MC");
             hist_Evis_all->GetXaxis()->SetTitle("");
             hist_Evis_all->GetYaxis()->SetTitle("# Events");
             hist_Evis_all->Draw("hist");
+            pt1->Draw("SAME");
 
             // Plot the efficiency
             pad2->cd();
+            pad2->SetGrid();          // enables both x and y grids
             hist_efficiency_Evis->SetTitle("Efficiency");
             hist_efficiency_Evis->Draw("E3");   // shadow
             hist_efficiency_Evis->Draw("P SAME");  // points on top
-            hist_efficiency_Evis->SetMinimum(0.6);
-            hist_efficiency_Evis->SetMaximum(1.1);
+            hist_efficiency_Evis->SetMinimum(0.7);
+            hist_efficiency_Evis->SetMaximum(1.3);
 
             TLine* l2 = new TLine(0, 1, 2000, 1);            // Line to show the efficiency=1
             TuneLine_eff(l2);     
             l2->Draw("SAME");
+            pt2->Draw("SAME");
             c1->SaveAs("Efficiency_all/NewMC/Efficiency_Evis.pdf");
         }
     } // Finish loop over files
