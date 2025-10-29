@@ -70,7 +70,7 @@ void Efficiency_paper(){
     // Declaration of the files 
     std::vector<string> filenames;
     filenames.push_back("/Users/carlosmm/Documents/Doctorado/ServiceTask/Task/Data/Matching_OldMC.root");
-    filenames.push_back("/Users/carlosmm/Documents/Doctorado/ServiceTask/Task/Data/Matching_NewMC.root");
+    filenames.push_back("/Users/carlosmm/Documents/Doctorado/ServiceTask/Task/Data/Matching_NewMC_big.root");
 
     // Variables to manage the file and the directory of its tree
     TFile *input_file;
@@ -128,6 +128,7 @@ void Efficiency_paper(){
 
         int total_num_interactions = 0;             // Accumulated number of interactions
         int total_num_flashed_interactions = 0;     // Accumulated number of flashed interactions
+        int total_coincident_interactions = 0;    // Accumulated number of coincident interactions
     
         double Evis;                    // visible energy of the neutrino interaction
         double drift;                   // drift distance of the neutrino interaction
@@ -170,7 +171,9 @@ void Efficiency_paper(){
                         // I save the time of the OpFlash
                         FlashTime_v.push_back(FlashTime);
                         
-                    }   
+                    }else if(CoincidentInteraction==true){
+                        total_coincident_interactions++;
+                    }
                     // In any case, the 'all' histograms are filled here
                     hist_Evis_all->Fill(Evis);
                     hist_xdrift_all->Fill(drift);
@@ -186,6 +189,7 @@ void Efficiency_paper(){
         cout<<endl<<"----- Efficiency stats: -----"<<endl;
         cout<<"-----------------------------"<<endl;
         cout<<"EFFICIENCY: "<<(double)total_num_flashed_interactions/(double)total_num_interactions * 100<<" %"<<endl;
+        cout<<"Fraction of coincident interactions: "<<(double)total_coincident_interactions/(double)total_num_interactions * 100<<" %"<<endl;
 
         // Now I create the efficiency histograms
         // Create a clone to store the result of the divisions:

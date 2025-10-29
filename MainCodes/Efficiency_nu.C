@@ -224,7 +224,7 @@ void Efficiency_nu(){
                             if(nuvX->at(nu_index)>X_MIN && nuvX->at(nu_index)<X_MAX && 
                                 nuvY->at(nu_index)>Y_MIN && nuvY->at(nu_index)<Y_MAX && 
                                 nuvZ->at(nu_index)>Z_MIN && nuvZ->at(nu_index)<Z_MAX)
-                                {
+                            {
                                 
                                 // I fill the neutrino-only efficiency histograms for neutrinos inside the TPC
                                 hist_Enu_flashed_TPC->Fill(Enu);
@@ -272,50 +272,6 @@ void Efficiency_nu(){
                 } 
             } // Finish if(nu_in_TCPC==true)
 
-            
-
-            /*
-            I take into account that:
-            Very usually, the interaction will have only >=1 neutrino that interacts outside the TPC
-            In this case, num_neutrinos_true == 0 and num_neutrinos_reco >= 1 (they produce enough light inside the detector)
-            If this happens (num_neutrinos_true == 0 and num_neutrinos_reco == 1), I do NOT want to plot the distribution of OpHits, since it is not a lost neutrino
-            And I also do NOT want to take into account them for the purity calculation
-            */
-           /*
-           previous_matched_ID=-1; // I reset the previous matched ID to -1 for the next loop
-            if(num_neutrinos_true==0 && num_neutrinos_reco>=1){
-
-                for(int j=0; j<nopflash; j++){
-                    // I match the OpFlash with the interaction. SO FAR ONLY WORKS FOR NEUTRINO INTERACTIONS
-                    matched_ID = OpFlash_interaction_matcher(flash_time->at(j), event_tree, i, nu_index);
-
-                    // I check if the interaction is neutrino
-                    if(matched_ID<20000000 && matched_ID!=-1){ // The cosmics are the only particles with ID > 2e7. If no match is found, ID=-1
-
-                        if(matched_ID!=previous_matched_ID){
-                            num_neutrinos_true++; // I add the number of real (true) neutrinos in the event that happened inside the TPC, even tough it is outside in this case
-                            // I get the information of the neutrino that caused this interaction OUTSIDE of the TPC
-                            drift = 200 - std::abs(nuvX->at(nu_index));   // Distance of the particle with the anode plane in the drift axis 
-                            Enu = nuvE->at(nu_index) * 1000;             // Visible energy in MeV (nuvE is in GeV)
-
-                            // I fill the neutrino-only efficiency histograms for neutrinos inside the TPC
-                            hist_Enu_flashed_TPC->Fill(Enu);
-                            hist_drift_flashed_TPC->Fill(drift);
-                            num_neutrinos_flashed_TPC++;
-
-                            // I fill the histograms with the true neutrinos inside the TPC even though it is outside in this case
-                            hist_Enu_true_TPC->Fill(Enu);
-                            hist_drift_true_TPC->Fill(drift);
-                            num_neutrinos_true_TPC++;
-                        }
-                    }else{  // In case it is not a neutrino
-                        matched_ID=previous_matched_ID; // I keep the previous matched ID if the current one is not a neutrino. this way I always save the last matched neutrino interaction
-                    }
-                    // I save the previous matched ID to check if a neutrino produces 2 OpFlashes (and not count it twice)
-                    previous_matched_ID = matched_ID;
-                } // End of the loop in OpFlashes
-            } 
-            */
             // I have finished calculating the variables for the efficiency plots for this event
             cout<<"----- Efficiency stats: -----"<<endl;
 
@@ -355,6 +311,7 @@ void Efficiency_nu(){
                 std::string msg_1 = "# Event: " + std::to_string(i);
                 std::string msg_2 = "# Neutrinos in event: " + std::to_string(num_neutrinos_true);
 
+
                 // I say if there was an InTimeCosmic in the event
                 std::string InTimeCosmic_Str;
                 if (InTimeCosmics==true) {
@@ -364,7 +321,7 @@ void Efficiency_nu(){
                     InTimeCosmic_Str = "false";
                 }
                 std::string msg_3 = std::string("# There is InTimeCosmic: ") + InTimeCosmic_Str;
-                std::string msg_4 = std::string("# Neutrinos reconstructed: ") + std::to_string(num_neutrinos_reco);
+                std::string msg_4 = std::string("# Neutrinos reconstructed (inside TPC): ") + std::to_string(num_neutrinos_reco);
 
                 // Add text line
                 pt->AddText(msg_1.c_str());
