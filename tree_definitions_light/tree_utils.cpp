@@ -34,11 +34,11 @@ Declaration of the variables inside the tree for the analyzer. The .root file wi
 
 ////////////////////// Map for PDS ////////////////////////
 // Variables to store the PDS mapping
-std::vector<int> OpDetID;        // Optical detector ID
-std::vector<double> OpDetX;      // Optical detector X position (in cm)
-std::vector<double> OpDetY;      // Optical detector Y position (in cm)
-std::vector<double> OpDetZ;      // Optical detector Z position (in cm)
-std::vector<int> OpDetType;      // Optical detector type (0: CoatedPMT, 1: UncoatedPMT, 2: VUV XARAPUCA and 3: VIS XARAPUCA)
+std::vector<int>* OpDetID = nullptr;        // Optical detector ID
+std::vector<double>* OpDetX = nullptr;      // Optical detector X position (in cm)
+std::vector<double>* OpDetY = nullptr;      // Optical detector Y position (in cm)
+std::vector<double>* OpDetZ = nullptr;      // Optical detector Z position (in cm)
+std::vector<int>* OpDetType = nullptr;      // Optical detector type (0: CoatedPMT, 1: UncoatedPMT, 2: VUV XARAPUCA and 3: VIS XARAPUCA)
 
 /////////////////////// Event Variables ///////////////////////
 
@@ -268,11 +268,10 @@ void set_branch_OpAna(TTree* tree) {
 
 }
 
-
 void set_branch_PDS_map(TTree* tree) {
-    tree->Branch("OpDetID", &OpDetID);
-    tree->Branch("OpDetX", &OpDetX);
-    tree->Branch("OpDetY", &OpDetY);
-    tree->Branch("OpDetZ", &OpDetZ);
-    tree->Branch("OpDetType", &OpDetType);
+    tree->SetBranchAddress("OpDetID", &OpDetID);
+    tree->SetBranchAddress("OpDetX", &OpDetX);
+    tree->SetBranchAddress("OpDetY", &OpDetY);
+    tree->SetBranchAddress("OpDetZ", &OpDetZ);
+    tree->SetBranchAddress("OpDetType", &OpDetType);
 }

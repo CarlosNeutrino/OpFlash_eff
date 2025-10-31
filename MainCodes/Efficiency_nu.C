@@ -143,6 +143,28 @@ void Efficiency_nu(){
         int num_events=event_tree->GetEntries();
         int Niters = num_events;
         for (int i=0; i<Niters; i++){
+            if(i==1044 || i==141){
+                // These events do not create an OpFlash for the neutrino
+                // Because of having very low light production
+                for (int k=0; k<nuvE->size(); k++){
+                    if( nuvX->at(k)>X_MIN && nuvX->at(k)<X_MAX && 
+                        nuvY->at(k)>Y_MIN && nuvY->at(k)<Y_MAX && 
+                        nuvZ->at(k)>Z_MIN && nuvZ->at(k)<Z_MAX)
+                    {
+                        Enu = nuvE->at(k) * 1000;             // Visible energy in MeV (nuvE is in GeV)
+                        drift = 200 - std::abs(nuvX->at(k));   // Distance of the particle with the anode plane in the drift axis 
+
+                        cout<<"Energy of the neutrino: "<<Enu<<" MeV"<<endl;
+                        cout<<"vertex: ("<<nuvX->at(k)<<", "<<nuvY->at(k)<<", "<<nuvZ->at(k)<<")cm"<<endl;  
+
+                        for (int k=0; k<PDGcode->size(); k++){
+                            if(motherID->at(k)==10000000)
+                                cout<<"Particle "<<trackID->at(k)<<" with PDG code "<<PDGcode->at(k)<<" has energy: "<<E->at(k)<<endl;
+                        }
+                    } 
+                }
+            }
+
             num_neutrinos_reco=0;    // Each event I reset the number of neutrinos that have been flashed
             num_neutrinos_true=0;    // Each event I reset the number of true neutrinos inside the TPC
             nu_in_TPC=false;         // I reset the boolean that tells me if the neutrino interaction is inside the TPC
@@ -164,13 +186,14 @@ void Efficiency_nu(){
                 cout<<endl<<"           -------- Event number: " << i << "------" <<endl<<endl;
 
 
-
+                /*
                 if(nuvX->size()>=2){
                     for(int j=0; j<trackID->size(); j++){
                         if(trackID->at(j)<20000000 ) // I only print the primary particles from the neutrino interaction
                             cout<<"Particle "<<trackID->at(j)<<" with PDG code "<<PDGcode->at(j)<<" has mother: "<<motherID->at(j)<<endl;
                     }
                 }
+                */
         
                 // I loop over the particles to see the 'creation process' of each one
                 /*

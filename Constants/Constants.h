@@ -1,8 +1,8 @@
 // Detector geometry (in cm)
-const double Y_MIN = -250;
-const double Y_MAX = +250;
-const double X_MIN = -250;
-const double X_MAX = +250;
+const double Y_MIN = -200;
+const double Y_MAX = +200;
+const double X_MIN = -200;
+const double X_MAX = +200;
 const double Z_MIN = 0.;
 const double Z_MAX = 500.;
 

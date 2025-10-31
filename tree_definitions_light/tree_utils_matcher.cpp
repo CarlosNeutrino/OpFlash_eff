@@ -25,16 +25,16 @@ std::vector<std::vector<int>> fCoatedUncoatedMap;       // Map with the pairs of
 /////////////////////// Event Variables ///////////////////////
 
 // General event information
-unsigned int eventID;     // Event ID: number assigned to a event
-unsigned int runID;       // Run ID: number assigned to each run
-unsigned int subrunID;    // SubRun ID: number assigned to each subrun
+unsigned int eventID_eff;     // Event ID: number assigned to a event
+unsigned int runID_eff;       // Run ID: number assigned to each run
+unsigned int subrunID_eff;    // SubRun ID: number assigned to each subrun
 
 string InputFileName;   // Input file name
 
 ////////////// Generator stage //////////////
 int Origin;              // Origin of the interaction (1=beam, 2=cosmic, 4=single interaction)
 int NPrimaryParticles;   // Number of primary particles in the interaction
-double E;                // Energy of the primary particle (neutrino for neutrino interactions)
+double E_eff;                // Energy of the primary particle (neutrino for neutrino interactions)
 double DepositedEnergy;  // Total deposited energy inside the TPCs
 double dEPromX, dEPromY, dEPromZ;  // Mean position of the energy deposition in each coordinate inside the detector (weighted by deposited energy)
 double dETPCBalance;       // energy in TPC0 - energy in TPC1 / total energy
@@ -96,9 +96,9 @@ std::vector<double>* FlashMatchingScore_v = nullptr;    // Score given to the ma
 void set_branch_Light(TTree* tree) {
 
     //////////// General event information ////////////
-    tree->SetBranchAddress("eventID", &eventID);
-    tree->SetBranchAddress("runID", &runID);
-    tree->SetBranchAddress("subrunID", &subrunID);
+    tree->SetBranchAddress("eventID", &eventID_eff);
+    tree->SetBranchAddress("runID", &runID_eff);
+    tree->SetBranchAddress("subrunID", &subrunID_eff);
 
     //////////// Generator stage ////////////
     tree->SetBranchAddress("Origin", &Origin);
@@ -170,7 +170,7 @@ void set_branch_Light(TTree* tree) {
 
 
 void set_branch_header(TTree* tree) {
-    tree->Branch("runID", &runID, "runID");
-    tree->Branch("subrunID", &subrunID, "subrunID");
-    tree->Branch("InputFileName", &InputFileName);
+    tree->SetBranchAddress("runID", &runID_eff);
+    tree->SetBranchAddress("subrunID", &subrunID_eff);
+    tree->SetBranchAddress("InputFileName", &InputFileName);
 }
