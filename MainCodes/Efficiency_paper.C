@@ -206,11 +206,11 @@ void Efficiency_paper(){
 
         // Now the histograms are ready to be tuned and saved
         TuneHist_eff(hist_efficiency_drift);
-        hist_efficiency_drift->GetXaxis()->SetTitle("<Drift distance> (cm)");
+        hist_efficiency_drift->GetXaxis()->SetTitle("<d_{drift}> (cm)");
         hist_efficiency_drift->GetYaxis()->SetTitle("Efficiency");
 
         TuneHist_eff(hist_efficiency_Evis);
-        hist_efficiency_Evis->GetXaxis()->SetTitle("Visible energy (MeV)");
+        hist_efficiency_Evis->GetXaxis()->SetTitle("E_{vis} (MeV)");
         hist_efficiency_Evis->GetYaxis()->SetTitle("Efficiency");
 
         if(file.find("OldMC") != std::string::npos){
@@ -319,7 +319,7 @@ void Efficiency_paper(){
             pad1->SetLogy();  // log scale only on the event histogram pad
             TuneHist(hist_xdrift_all);
             hist_xdrift_all->GetYaxis()->SetMoreLogLabels();
-            hist_xdrift_all->SetTitle("Realistic MC");
+            hist_xdrift_all->SetTitle("Fall Production validation BNB+cosmics");
             hist_xdrift_all->GetXaxis()->SetTitle("");
             hist_xdrift_all->GetYaxis()->SetTitle("# Events");
             hist_xdrift_all->Draw("hist");
@@ -345,7 +345,7 @@ void Efficiency_paper(){
             pad1->SetLogy();  // log scale only on the event histogram pad
             TuneHist(hist_Evis_all);
             hist_Evis_all->GetYaxis()->SetMoreLogLabels();
-            hist_Evis_all->SetTitle("Realistic MC");
+            hist_Evis_all->SetTitle("Fall Production validation BNB+cosmics");
             hist_Evis_all->GetXaxis()->SetTitle("");
             hist_Evis_all->GetYaxis()->SetTitle("# Events");
             hist_Evis_all->Draw("hist");

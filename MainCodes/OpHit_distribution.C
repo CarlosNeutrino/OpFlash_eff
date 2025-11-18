@@ -19,7 +19,9 @@ void OpHit_distribution(){
 
     // Declaration of the histogram --> distribution of OpHits normalized to the number of photo-electrons
     std::vector<TH1F*> hists;               // vector to save the histogram
-    std::vector<TPaveText*> pts;            // vector to save the text
+    // Range of the histogram. Change accordingly to what you may want
+    double min_hist = -5;
+    double max_hist = 20;
 
     std::vector<std::vector<TLine*>> lines_start;        // vector to save the horizontal lines of the time of the beginning of the OpFlash for each event
     std::vector<std::vector<TLine*>> lines_finish;       // vector to save the horizontal lines of the time of the beginning of the OpFlash for each event
@@ -35,7 +37,7 @@ void OpHit_distribution(){
 
     // Declaration of the files 
     std::vector<string> filenames;
-    filenames.push_back("/Users/carlosmm/Documents/Doctorado/ServiceTask/Task/Data/opana_tree.root");
+    filenames.push_back("/Users/carlosmm/Documents/Doctorado/ServiceTask/Task/Data/v10_06/opana_tree_big.root");
 
     // Variables to manage the file and the directory of its tree
     TFile *input_file;
@@ -82,6 +84,7 @@ void OpHit_distribution(){
 
         // Loop over all entries of the TTree
         int num_events=event_tree->GetEntries();
+        num_events=200;  // for testing purposes, I only use 200 events
         for (int i=0; i<num_events; i++){
 
             // I loop over the particles to see the 'creation process' of each one
@@ -96,10 +99,6 @@ void OpHit_distribution(){
             // Get the entry 'i' of the event tree
             event_tree->GetEntry(i);
 
-            // Range of the histogram. Change accordingly to what you may want
-            double min_hist = -100;
-            double max_hist = 100;
-
             // Create a NEW histogram for this event
             TString hname = Form("Histogram_%d", i);
             TH1F *h = new TH1F(hname, "OpHit distribution",  (max_hist - min_hist)/BIN_SIZE, min_hist, max_hist);
@@ -113,26 +112,16 @@ void OpHit_distribution(){
                 // I fill each histogram with the time of the OpHit. 
                 // I weight the histogram with the number of photo-electrons in each OpHit
                 abs_time = ophit_startT->at(j) + ophit_riseT->at(j);
+                cout<<"----- OpHit "<<j<<" time: "<<abs_time<<" ------"<<endl;
+                cout<<"     Time is ophitstartT: "<<ophit_startT->at(j)<<" + ophit_riseT: "<<ophit_riseT->at(j)<<" = "<<abs_time<<endl;
                 h->Fill( abs_time, ophit_pe->at(j) );
             }
-
-            // I write the number of OpFlashes in each histogram (each event)
-            // Define the box position in NDC (normalized device coordinates)
-            TPaveText *pt = new TPaveText(0.65, 0.84, 0.9, 0.9, "NDC");  
-            pt->SetFillColor(0);   // transparent background
-            pt->SetBorderSize(1);  // small border
-            pt->SetTextSize(0.03);
-            pt->SetTextAlign(12);
 
             // Build the message
             std::string msg = "# OpFlashes: " + std::to_string(nopflash);
 
-            // Add text line
-            pt->AddText(msg.c_str());
-
             // I fill the vector with the histogram and TPaveText of each event
             hists.push_back(h);
-            pts.push_back(pt);
 
             // I loop over the OpFlashes to plot the veto time
             for(int j=0; j<nopflash; j++){
@@ -172,13 +161,10 @@ void OpHit_distribution(){
     // I loop over all histograms
     for(int k=0; k<hists.size(); k++){
         // I draw the histogram 
-        TuneHist(hists.at(k));
+        TuneHist_OpHitDistribution(hists.at(k));
         hists.at(k)->Draw("hist");
         // Get the maximum of the hists
-        double line_max = hists.at(k)->GetMaximum();
-
-        // Draw on canvas
-        pts.at(k)->Draw("same");
+        double line_max = hists.at(k)->GetMaximum()*0.9;
 
         // I draw the lines and arrows
         for(int h=0; h<lines_start.at(k).size(); h++){
@@ -192,14 +178,16 @@ void OpHit_distribution(){
             TuneArrow(arrows.at(k).at(h));
 
             // Redefine the y of the arrows
-            double arrow_y = line_max * 0.90; // 90% of max height
+            double arrow_y = line_max * 0.75; // 75% of max height
             arrows.at(k).at(h)->SetY1(arrow_y);
             arrows.at(k).at(h)->SetY2(arrow_y);
 
             // Draw on canvas
-            lines_start.at(k).at(h)->Draw("same");
-            lines_finish.at(k).at(h)->Draw("same");
-            arrows.at(k).at(h)->Draw("same");
+            if(lines_start.at(k).at(h)->GetX1()>min_hist && lines_finish.at(k).at(h)->GetX1()<max_hist){  // I only draw the lines if they are in the range of the histogram
+                lines_start.at(k).at(h)->Draw("same");
+                lines_finish.at(k).at(h)->Draw("same");
+                arrows.at(k).at(h)->Draw("same");
+            }      
         }
 
         // I save the histogram

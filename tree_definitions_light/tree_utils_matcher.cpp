@@ -103,7 +103,7 @@ void set_branch_Light(TTree* tree) {
     //////////// Generator stage ////////////
     tree->SetBranchAddress("Origin", &Origin);
     tree->SetBranchAddress("NPrimaryParticles", &NPrimaryParticles);
-    tree->SetBranchAddress("E", &E);
+    tree->SetBranchAddress("E", &E_eff);
     tree->SetBranchAddress("DepositedEnergy", &DepositedEnergy);
     tree->SetBranchAddress("dEPromX", &dEPromX);
     tree->SetBranchAddress("dEPromY", &dEPromY);

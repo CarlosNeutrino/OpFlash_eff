@@ -129,6 +129,7 @@ void Efficiency_paper_nu(){
         int total_num_interactions = 0;             // Accumulated number of interactions
         int total_num_flashed_interactions = 0;     // Accumulated number of flashed interactions
         int total_coincident_interactions = 0;    // Accumulated number of coincident interactions
+        int total_lowLight_events = 0;          // Accumulated number of low light events (no flash, no coincident interaction)
     
         double Evis;                    // visible energy of the neutrino interaction
         double drift;                   // drift distance of the neutrino interaction
@@ -175,6 +176,12 @@ void Efficiency_paper_nu(){
                         }else if(CoincidentInteraction==true){
                             total_coincident_interactions++;
                         }
+
+                        if(RecoFlash==false && CoincidentInteraction==false){
+                            total_lowLight_events++;
+                        }else if(RecoFlash==false && CoincidentInteraction==true){
+                            cout<<"Flash time: "<<FlashTime<<" us, Interaction time: "<<InteractionTime/1000.<<" us"<<endl;
+                        }
                         // In any case, the 'all' histograms are filled here
                         hist_Evis_all->Fill(Evis);
                         hist_xdrift_all->Fill(drift);
@@ -183,6 +190,7 @@ void Efficiency_paper_nu(){
             
                         // I save the time of the interaction
                         InteractionTime_v.push_back(InteractionTime);      
+                    
                     }
                 }
             } // End loop over entries in the TTree
@@ -208,11 +216,11 @@ void Efficiency_paper_nu(){
 
         // Now the histograms are ready to be tuned and saved
         TuneHist_eff(hist_efficiency_drift);
-        hist_efficiency_drift->GetXaxis()->SetTitle("<Drift distance> (cm)");
+        hist_efficiency_drift->GetXaxis()->SetTitle("<d_{drift}> (cm)");
         hist_efficiency_drift->GetYaxis()->SetTitle("Efficiency");
 
         TuneHist_eff(hist_efficiency_Evis);
-        hist_efficiency_Evis->GetXaxis()->SetTitle("Visible energy (MeV)");
+        hist_efficiency_Evis->GetXaxis()->SetTitle("E_{vis} (MeV)");
         hist_efficiency_Evis->GetYaxis()->SetTitle("Efficiency");
 
         if(file.find("OldMC") != std::string::npos){
@@ -257,8 +265,8 @@ void Efficiency_paper_nu(){
             hist_efficiency_drift->GetYaxis()->SetTitle("Efficiency");
             hist_efficiency_drift->Draw("E3");   // shadow
             hist_efficiency_drift->Draw("P SAME");  // points on top
-            hist_efficiency_drift->SetMinimum(0.4);
-            hist_efficiency_drift->SetMaximum(1.5);
+            hist_efficiency_drift->SetMinimum(0.3);
+            hist_efficiency_drift->SetMaximum(1.7);
 
             TLine* l1 = new TLine(0, 1, 200, 1);            // Line to show the efficiency=1
             TuneLine_eff(l1);
@@ -284,8 +292,8 @@ void Efficiency_paper_nu(){
             hist_efficiency_Evis->GetYaxis()->SetTitle("Efficiency");
             hist_efficiency_Evis->Draw("E3");   // shadow
             hist_efficiency_Evis->Draw("P SAME");  // points on top  
-            hist_efficiency_Evis->SetMinimum(0.4);
-            hist_efficiency_Evis->SetMaximum(1.5);
+            hist_efficiency_Evis->SetMinimum(0.3);
+            hist_efficiency_Evis->SetMaximum(1.7);
 
             TLine* l2 = new TLine(0, 1, 2000, 1);            // Line to show the efficiency=1
             TuneLine_eff(l2);     
@@ -321,7 +329,7 @@ void Efficiency_paper_nu(){
             pad1->SetLogy();  // log scale only on the event histogram pad
             TuneHist(hist_xdrift_all);
             hist_xdrift_all->GetYaxis()->SetMoreLogLabels();
-            hist_xdrift_all->SetTitle("Realistic MC");
+            hist_xdrift_all->SetTitle("Fall Production validation BNB+cosmics");
             hist_xdrift_all->GetXaxis()->SetTitle("");
             hist_xdrift_all->GetYaxis()->SetTitle("# Events");
             hist_xdrift_all->Draw("hist");
@@ -333,8 +341,8 @@ void Efficiency_paper_nu(){
             hist_efficiency_drift->SetTitle("Efficiency");
             hist_efficiency_drift->Draw("E3");   // shadow
             hist_efficiency_drift->Draw("P SAME");  // points on top
-            hist_efficiency_drift->SetMinimum(0.4);
-            hist_efficiency_drift->SetMaximum(1.5);
+            hist_efficiency_drift->SetMinimum(0.3);
+            hist_efficiency_drift->SetMaximum(1.7);
 
             TLine* l1 = new TLine(0, 1, 200, 1);            // Line to show the efficiency=1
             TuneLine_eff(l1);
@@ -347,7 +355,7 @@ void Efficiency_paper_nu(){
             pad1->SetLogy();  // log scale only on the event histogram pad
             TuneHist(hist_Evis_all);
             hist_Evis_all->GetYaxis()->SetMoreLogLabels();
-            hist_Evis_all->SetTitle("Realistic MC");
+            hist_Evis_all->SetTitle("Fall Production validation BNB+cosmics");
             hist_Evis_all->GetXaxis()->SetTitle("");
             hist_Evis_all->GetYaxis()->SetTitle("# Events");
             hist_Evis_all->Draw("hist");
@@ -359,8 +367,8 @@ void Efficiency_paper_nu(){
             hist_efficiency_Evis->SetTitle("Efficiency");
             hist_efficiency_Evis->Draw("E3");   // shadow
             hist_efficiency_Evis->Draw("P SAME");  // points on top
-            hist_efficiency_Evis->SetMinimum(0.4);
-            hist_efficiency_Evis->SetMaximum(1.5);
+            hist_efficiency_Evis->SetMinimum(0.3);
+            hist_efficiency_Evis->SetMaximum(1.7);
 
             TLine* l2 = new TLine(0, 1, 2000, 1);            // Line to show the efficiency=1
             TuneLine_eff(l2);     

@@ -29,6 +29,32 @@ void TuneHist(TH1F* hist){
     
 }
 
+void TuneHist_OpHitDistribution(TH1F* hist){
+    hist->SetStats(0);
+
+    hist->GetXaxis()->SetTitleSize(0.04);
+    hist->GetYaxis()->SetTitleSize(0.04);
+    hist->GetXaxis()->SetLabelSize(0.04);
+    hist->GetYaxis()->SetLabelSize(0.04);
+
+    hist->SetLineStyle(1);
+    hist->SetLineWidth(2);
+    hist->SetFillStyle(1001);       //1001-->filling, 0-->no filling 
+    hist->SetMarkerColor(kBlack);
+    hist->SetMarkerStyle(21);
+    hist->SetMarkerSize(0.);
+
+    hist->SetLineColor(kBlue);
+    hist->SetFillColorAlpha(kAzure-8, 0.75);
+
+    hist->GetXaxis()->SetTitle("Absolute time (#mu s)");
+    hist->GetYaxis()->SetTitle("# photo-electrons (all channels)");
+
+    hist->GetXaxis()->SetTitleOffset(1.);  // Adjust the offset of the X-axis title
+    hist->GetYaxis()->SetTitleOffset(1.4);  // Adjust the offset of the Y-axis title
+    
+}
+
 void TuneHist_2D(TH2F* hist){
     hist->SetStats(0);
 
