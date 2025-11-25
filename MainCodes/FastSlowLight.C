@@ -154,11 +154,8 @@ void FastSlowLight(){
         int num_events=event_tree->GetEntries();
         int num_pdsmaps=pdsmap_tree->GetEntries();
         int Niters = num_events;
-        Niters=10000;   // For testing purposes
 
-        FAST_LIGHT_TIME = 0.300; // 300 ns
-
-        for (int i=0; i<Niters; i++){
+        for (int i=1; i<Niters; i++){
 
             // Get the entry 'i' of the event tree
             event_tree->GetEntry(i);
@@ -222,6 +219,7 @@ void FastSlowLight(){
 
                 }else if(coincident_interaction==false){  // Case in which there is NO interaction coincident with the OpFlash
                     // Find the minimum value of flash_time->at(f) - OpHit time to reference every time to this one
+                    //cout<<"NO Found coincident interaction for OpFlash!! " << endl;
                     double min_time = 1e9;
                     for(int j=0; j<flash_ophit_starttime->at(f).size(); j++){
                         abs_time = flash_ophit_starttime->at(f).at(j) + flash_ophit_risetime->at(f).at(j);
@@ -257,7 +255,7 @@ void FastSlowLight(){
     } // Finish loop over files
 
     // Use log scale
-    //gPad->SetLogy(true);
+    gPad->SetLogy(true);
 
     // Tune the histograms
     TuneHist(hist_Coincident);
@@ -293,6 +291,6 @@ void FastSlowLight(){
 
 
     c1->Update();
-    c1->SaveAs("FastSlowLight/FastSlowLight_350ns_NoLog.pdf");
+    c1->SaveAs("FastSlowLight/FastSlowLight_030ns.pdf");
    
 }
