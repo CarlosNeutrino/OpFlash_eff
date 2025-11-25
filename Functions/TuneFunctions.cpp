@@ -25,7 +25,7 @@ void TuneHist(TH1F* hist){
     hist->GetYaxis()->SetTitle("# photo-electrons (all channels)");
 
     hist->GetXaxis()->SetTitleOffset(0.88);  // Adjust the offset of the X-axis title
-    hist->GetYaxis()->SetTitleOffset(0.8);  // Adjust the offset of the Y-axis title
+    hist->GetYaxis()->SetTitleOffset(0.7);  // Adjust the offset of the Y-axis title
     
 }
 
