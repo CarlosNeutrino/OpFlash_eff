@@ -15,9 +15,10 @@ const int PE_MIN_PMT = 6;       // minimum value of photo-electrons for a OpHit 
 const int PE_MIN = 10;          // minimum value of photo-electrons for the sum of contributing OpHits to start an OpFlash
 
 // Light components time constants and windows
-const double FAST_LIGHT_TIME_CTE = 6.;            // Time constant for fast light component (in ns)
-const double SLOW_LIGHT_TIME_CTE = 1590.;         // Time constant for fast light component (in ns)
-const double FAST_LIGHT_TIME = (FAST_LIGHT_TIME_CTE*5.)/1000.;             // Time window for detecting 99% of the fast light component (in μs). I take into account the travel of the photons to make this time longer
+const double FAST_LIGHT_TIME_CTE = 6./1000.;            // Time constant for fast light component (in μs)
+const double SLOW_LIGHT_TIME_CTE = 1590./1000.;         // Time constant for fast light component (in μs)
+//const double FAST_LIGHT_TIME = FAST_LIGHT_TIME_CTE*5;             // Time window for detecting 99% of the fast light component (in μs). I take into account the travel of the photons to make this time longer
+const double FAST_LIGHT_TIME = 0.2;
 const double SLOW_LIGHT_TIME = 4.77;              // Time window for detecting 95% of the slow light component (in μs)
 
 // Numeric constants

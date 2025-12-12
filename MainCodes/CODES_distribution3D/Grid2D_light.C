@@ -22,7 +22,7 @@ Code for plotting cout'ing some correlations between flash variables and interac
 
 // MAIN CODE
 void Grid2D_light(){
-    bool DoFit = false;
+    bool DoFit = true;
     // Declaration of the canvas
     TCanvas *c1= new TCanvas("name", "Efficiency", 1000, 800);  
 
@@ -45,7 +45,16 @@ void Grid2D_light(){
     pad2->SetLeftMargin(0.1);
     pad2->Draw();
 
-    // Define a 2D gaussian
+    // Define a function for expected distribution of light (1D exponential)
+    TF1 *exp_f = new TF1("ExpHit", Exp1D, -1500, 1500., 2); // 2 = number of parameters
+    /*
+    Parameters:
+    - Amplitude (#PE in the time t_0)
+    - Start time
+    */
+   // I will cange the range in each representation
+
+    // Define a 2D gaussian. 
     TF2 *GaussFit = new TF2("GaussFit", gauss2D, Z_MIN, Z_MAX, Y_MIN, Y_MAX, 5); // 5 = number of parameters
     GaussFit->SetParameters(1000., 0., 10., 250., 10.); // Initial parameters for the fit
     /*
@@ -66,6 +75,7 @@ void Grid2D_light(){
     double min_hist = -15.;
     double max_hist = 15.;
     double CoincidentInteractionTime;
+    double CoincidentInteractionTime_flashed;
 
     // Histograms to save the lines and arrow to deliminate an opFlash
     std::vector<TLine*> lines_start_ev;                  // auxiliary vector to save the above one
@@ -114,10 +124,20 @@ void Grid2D_light(){
         unsigned int run_ID_struct;
         unsigned int subrun_ID_struct;
         double time_struct;
-        int pdgcode;            // Only to know if the interaction is neutrino or cosmic
+        int pdgcode_struct;            // Only to know if the interaction is neutrino or cosmic
+        TVector3 vertex_struct;
+    };
+    struct Event_Info_flashed {
+        unsigned int event_ID_struct;
+        unsigned int run_ID_struct;
+        unsigned int subrun_ID_struct;
+        double time_struct;
+        int pdgcode_struct;            // Only to know if the interaction is neutrino or cosmic
+        TVector3 vertex_struct;
     };
     // Create vecctor to save the event information
     std::vector<Event_Info> ID_interactions;
+    std::vector<Event_Info_flashed> ID_interactions_flashed;
 
      // Loop over all entries of the TTree
     int num_events=eff_tree->GetEntries();
@@ -131,13 +151,40 @@ void Grid2D_light(){
         // Each entry of the tree is an MCTruth object (1 truth interaction)
         
         if(abs(InteractionTime)<1.3e6){
-
             // Case in which there is an OpFlash corresponding to the interaction
             if(CoincidentInteraction==true && RecoFlash==false){
+                TVector3 vertex_pos;
+                vertex_pos.SetXYZ(dEPromX, dEPromY, dEPromZ);
                 // Save the eventID and interactiontime of the coincident interaction
-                ID_interactions.push_back({eventID_eff, runID_eff, subrunID_eff, InteractionTime/1000., IntPDG}); // time in us
+                ID_interactions.push_back({eventID_eff, runID_eff, subrunID_eff, InteractionTime/1000., IntPDG, vertex_pos}); // time in us
             }
         } // End loop over entries in the TTree
+    }
+
+    // Find the average deposition of energy position of the interaction that DOES cause an OpFlash
+    for (int i=0; i<Niters; i++){
+        // Get the entry 'i' of the event tree
+        eff_tree->GetEntry(i);
+        if(i%10000==0)  cout<<endl<<endl<<"           -------- Event number: " << i << "------" <<endl;
+        // Each entry of the tree is an MCTruth object (1 truth interaction)
+        if(abs(InteractionTime)<1.3e6){
+            // Case in which there is an OpFlash corresponding to the interaction
+            // Loop over all previous saved interactions that caused an OpFlash
+            for (const auto& inter : ID_interactions) {
+                if(eventID_eff == inter.event_ID_struct && runID_eff == inter.run_ID_struct && subrunID_eff == inter.subrun_ID_struct){
+                    //cout<<"Matching interactions with times: "<<InteractionTime/1000.<<" and "<<inter.time_struct<<" ?"<<endl;
+                    if( (abs(InteractionTime/1000. - inter.time_struct) < 8.) && (RecoFlash==true) ){
+                        //cout<<"Found an interaction that ALSO caused an OpFlash! in interaction number: "<<i<<endl;
+                        TVector3 vertex_pos;
+                        vertex_pos.SetXYZ(dEPromX, dEPromY, dEPromZ);
+                        // Save the eventID and interactiontime of the coincident interaction
+                        ID_interactions_flashed.push_back({eventID_eff, runID_eff, subrunID_eff, InteractionTime/1000., IntPDG, vertex_pos}); // time in us
+                    }
+                }
+            }
+
+        } // End loop over entries in the TTree
+
     }
 
     cout<<endl<<endl<<endl<<endl<<endl<<"----------------- Finished saving the coincident interactions -----------------"<<endl<<endl<<endl<<endl<<endl;
@@ -181,6 +228,9 @@ void Grid2D_light(){
         int max_OpHit;                      // maximum value of the OpHit of a certain OpFlah
 
         int InteractionPDG;         // From the struct, to know if the interaction is neutrino or cosmic
+        int InteractionPDG_flashed;         // From the struct, to know if the interaction is neutrino or cosmic
+        TVector3 vertex_interaction;    // From the struct, Vertex of the coincident interaction
+        TVector3 vertex_interaction_flashed;    // From the struct, Vertex of the coincident interaction
 
         int total_case1=0;  // number of coincident interaction AFTER the OpFlash
         int total_case2=0;  // number of coincident interaction BEFORE the OpFlash
@@ -194,7 +244,6 @@ void Grid2D_light(){
         int num_events=event_tree->GetEntries();
         int num_pdsmaps=pdsmap_tree->GetEntries();
         int Niters = num_events;
-        Niters=2000;   // For testing purposes
         for (int i=0; i<Niters; i++){
 
             // Get the entry 'i' of the event tree
@@ -221,10 +270,12 @@ void Grid2D_light(){
                         
                         CoincidentInteractionTime = inter.time_struct;
                         coincident_interaction = true;
-                        InteractionPDG = inter.pdgcode;
+                        InteractionPDG = inter.pdgcode_struct;
+                        vertex_interaction = inter.vertex_struct;
                     }
                 }
-
+                // Count the different cases
+                /*
                 if(abs(InteractionPDG)==12 || abs(InteractionPDG)==14){
                     if(coincident_interaction==true && CoincidentInteractionTime > flash_time->at(f)){
                         total_case1++;
@@ -244,8 +295,25 @@ void Grid2D_light(){
                         total_case3++;
                     }
                 }
+                */
                 
                 if(coincident_interaction==true && CoincidentInteractionTime > flash_time->at(f)){  // I only want to plot the events that have a coincident interaction with the OpFlash
+
+                    // Get the information about the interaction that causes the OpFlash
+                    for (const auto& inter : ID_interactions_flashed) {
+                        if(inter.event_ID_struct == eventID
+                            && inter.run_ID_struct == runID 
+                            && inter.subrun_ID_struct == subrunID
+                            && abs(inter.time_struct - flash_time->at(f)) < 2.) {   // If the eventID matches and the time of the interaction is close to the time of the OpFlash within the veto window
+                            
+                            CoincidentInteractionTime_flashed = inter.time_struct;
+                            InteractionPDG_flashed = inter.pdgcode_struct;
+                            vertex_interaction_flashed = inter.vertex_struct;
+                        }
+                    }
+
+                    cout<<"The time of the interactions are: "<<CoincidentInteractionTime<<" (causing no OpFlash) and "<<CoincidentInteractionTime_flashed<<" (causing OpFlash)"<<endl;
+
 
                     // Define the histogram limits using the OpFlash times
                     // Get the time of the flash
@@ -257,7 +325,6 @@ void Grid2D_light(){
                     // I reset the histogram that had been created 
                     h_OpHit->Reset();
 
-                    // Analysis of the variables
                     // I loop over all OpHits that have been registered
                     for(int j=0; j<flash_ophit_starttime->at(f).size(); j++){
                         // I fill each histogram with the time of the OpHit. 
@@ -341,6 +408,21 @@ void Grid2D_light(){
                         }
                     }
 
+                    // Draw the exponenctial function
+                    // Find the start time of the flash in the histogram as the first time bin with content
+                    // Find the bin with the maximum PE value
+                    int maxBin = h_OpHit->GetMaximumBin();
+
+                    // Extract amplitude (max number of PE)
+                    double amplitude = h_OpHit->GetBinContent(maxBin);
+
+                    // Extract start time (x value at that bin)
+                    double start_time_exp = h_OpHit->GetBinCenter(maxBin);
+                    exp_f->SetParameters(amplitude, start_time_exp); // Set the parameters of the function
+                    exp_f->SetRange(min_hist, max_hist);  // Set the range of the function
+                    TuneGraph_1D(exp_f);
+                    exp_f->Draw("same");
+
                     // I calculate the amount of light that each OpFlash has in each PMT in a map
                     std::map<int, double> map_ID_PE_TPC0;    // map with the ID of each PMT and the total PE that it has detected in this OpFlash
                     std::map<int, double> map_ID_PE_TPC1;    // map with the ID of each PMT and the total PE that it has detected in this OpFlash
@@ -412,38 +494,50 @@ void Grid2D_light(){
                         double max_y = 0.0;
                         double max_z = 0.0;
 
+                        // Create the plots for the fit residuals
                         TGraph2D* gr2d_TPC0_susbtracted = new TGraph2D();
                         TGraph2D* gr2d_TPC1_susbtracted = new TGraph2D();
+
+                        // create the marker to show the vertex
+                        TMarker *cross = new TMarker(vertex_interaction.Z(), vertex_interaction.Y(), 2);  // 2 = cross "×"
+                        cout<<"Drawing vertex in: ("<<vertex_interaction.Z()<<", "<<vertex_interaction.Y()<<")" << endl;
+                        cross->SetMarkerColor(kRed);
+                        cross->SetMarkerSize(2.0);
+                        cross->SetMarkerStyle(29);  // 29 = big cross (star)
+
+                        // create the marker to show the vertex of the flashed interaction
+                        TMarker *cross_flashed = new TMarker(vertex_interaction_flashed.Z(), vertex_interaction_flashed.Y(), 2);  // 2 = cross "×"
+                        cout<<"Drawing vertex in: ("<<vertex_interaction_flashed.Z()<<", "<<vertex_interaction_flashed.Y()<<")" << endl;
+                        cross_flashed->SetMarkerColor(kViolet);
+                        cross_flashed->SetMarkerSize(2.0);
+                        cross_flashed->SetMarkerStyle(29);  // 29 = big cross (star)
 
                         // Fit the spatial distribution of OpHits in each TPC
                         if(gr2d_TPC1->GetN() == 0){
                             GaussFit->SetBit(kCannotPick);  // draws flat on top
+                            // Get the values of maximum Z (#PEs), X (Z position) and Y (Y position)
                             max_z = GetMaxZ(gr2d_TPC0, max_x, max_y);
 
-                            GaussFit->SetParameters(max_z/2., max_x, 10., max_y, 10.); // Initial parameters for the fit
-                            GaussFit->SetRange(max_x - 50., max_x + 50., max_y - 50., max_y + 50.); // Set the range of the fit around the maximum
-
-                            // Set limits to the parameters
-                            GaussFit->SetParLimits(0, 5, 1e9);
-                            GaussFit->SetParLimits(1, max_x-40., max_x+40.);
-                            GaussFit->SetParLimits(2, 1., 100.);
-                            GaussFit->SetParLimits(3, max_y-40., max_y+40.);
-                            GaussFit->SetParLimits(4, 1., 100.);
-
-                            gr2d_TPC0->Fit("GaussFit", "R");   // "R" = respect the function range
+                            GaussFit->SetParameters(max_z, max_x, 75., max_y, 75.); // parameters of the plot
+                            GaussFit->SetRange(Z_MIN, Z_MAX, Y_MIN, Y_MAX); // Set the range of the function again for drawing
 
                             gr2d_TPC0_susbtracted = SubtractFit(gr2d_TPC0, GaussFit);
+                            // Mask the negative values
+                            int n = gr2d_TPC0_susbtracted->GetN();
+                            double x, y, z;
+
+                            for (int i = 0; i < n; i++) {
+                                gr2d_TPC0_susbtracted->GetPoint(i, x, y, z); // get the i-th point
+                                if (z < 0) z = 1;        // mask: set z to 0 if < 0
+                                gr2d_TPC0_susbtracted->SetPoint(i, x, y, z); // update the point
+                            }
                             pad2->cd();
                             TuneGraph_2D(gr2d_TPC0_susbtracted, "Spatial distribution residuals, TPC0");
                             gr2d_TPC0_susbtracted->Draw("COLZ");
-
-                            GaussFit->SetContour(100);  // 10 contour lines
-                            GaussFit->SetLineColor(kBlack);
-                            GaussFit->SetLineWidth(5);
-
-                            GaussFit->SetRange(Z_MIN, Z_MAX, Y_MIN, Y_MAX);  // full display range
-                            GaussFit->Draw("CONT3 SAME");   // SURF1 = 3D surface with color
-
+                            cross->Draw("SAME");
+                            cross_flashed->Draw("SAME");
+                            
+                        
                             c1->Update();
                             c1->Modified();
                             gPad->Update();
@@ -452,44 +546,27 @@ void Grid2D_light(){
                             GaussFit->SetBit(kCannotPick);  // draws flat on top
                             max_z = GetMaxZ(gr2d_TPC1, max_x, max_y);
 
-                            GaussFit->SetParameters(max_z/2., max_x, 10., max_y, 10.); // Initial parameters for the fit
-                            GaussFit->SetRange(max_x - 50., max_x + 50., max_y - 50., max_y + 50.); // Set the range of the fit around the maximum
-
-                            // Set limits to the parameters
-                            GaussFit->SetParLimits(0, 5, 1e9);
-                            GaussFit->SetParLimits(1, max_x-40., max_x+40.);
-                            GaussFit->SetParLimits(2, 1., 100.);
-                            GaussFit->SetParLimits(3, max_y-40., max_y+40.);
-                            GaussFit->SetParLimits(4, 1., 100.);
-                            
-                            gr2d_TPC1->Fit("GaussFit", "R");   // "R" = respect the function range
-
-                            // Print results of the fit:
-                            cout<<endl<<"------------------------------"<<endl;
-                            cout<<"Fit results for event " << i << ", OpFlash " << f << ", TPC0: "<<endl;
-                            cout<<"INITIAL CONDITIONS: "<<endl;
-                            cout<<" Amplitude: " << max_z/2. << endl;
-                            cout<<" Mean x: " << max_x << endl;
-                            cout<<" Mean y: " << max_y << endl;
-                            
-                            cout<<" Amplitude: " << GaussFit->GetParameter(0) << " +/- " << GaussFit->GetParError(0) << endl;
-                            cout<<" Mean x: " << GaussFit->GetParameter(1) << " +/- " << GaussFit->GetParError(1) << endl;
-                            cout<<" Sigma x: " << GaussFit->GetParameter(2) << " +/- " << GaussFit->GetParError(2) << endl;
-                            cout<<" Mean y: " << GaussFit->GetParameter(3) << " +/- " << GaussFit->GetParError(3) << endl;
-                            cout<<" Sigma y: " << GaussFit->GetParameter(4) << " +/- " << GaussFit->GetParError(4) << endl;
-                            cout<<"------------------------------"<<endl<<endl<<endl;
+                            GaussFit->SetParameters(max_z, max_x, 75., max_y, 75.); // Initial parameters for the fit
+                            GaussFit->SetRange(Z_MIN, Z_MAX, Y_MIN, Y_MAX); // Set the range of the function again for drawing
 
                             gr2d_TPC1_susbtracted = SubtractFit(gr2d_TPC1, GaussFit);
+                            // Mask the negative values
+                            int n = gr2d_TPC1_susbtracted->GetN();
+                            double x, y, z;
+
+                            for (int i = 0; i < n; i++) {
+                                gr2d_TPC1_susbtracted->GetPoint(i, x, y, z); // get the i-th point
+                                if (z < 0) z = 1;        // mask: set z to 0 if < 0
+                                gr2d_TPC1_susbtracted->SetPoint(i, x, y, z); // update the point
+                            }
+
                             pad2->cd();
                             TuneGraph_2D(gr2d_TPC1_susbtracted, "Spatial distribution residuals, TPC1");
-                            gr2d_TPC1_susbtracted->Draw("COLZ");
-
-                            GaussFit->SetContour(100);  // 10 contour lines
-                            GaussFit->SetLineColor(kBlack);
-                            GaussFit->SetLineWidth(5);
-
-                            GaussFit->SetRange(Z_MIN, Z_MAX, Y_MIN, Y_MAX);  // full display range
-                            GaussFit->Draw("CONT3 SAME");   // SURF1 = 3D surface with color
+                            gr2d_TPC1_susbtracted->Draw("COLZ");  
+                            cross->Draw("SAME");
+                            cross_flashed->Draw("SAME");
+                            
+                               
 
                             c1->Update();
                             c1->Modified();
@@ -498,12 +575,29 @@ void Grid2D_light(){
                         // I save the canvas
                         c1->SaveAs(Form("Distributions_3D_fit/Distribution_%i_%i.pdf", i, f));
                     }else{
+
+                        // create the marker to show the vertex
+                        TMarker *cross = new TMarker(vertex_interaction.Z(), vertex_interaction.Y(), 2);  // 2 = cross "×"
+                        cout<<"Drawing vertex in: ("<<vertex_interaction.Z()<<", "<<vertex_interaction.Y()<<")" << endl;
+                        cross->SetMarkerColor(kRed);
+                        cross->SetMarkerSize(2.0);
+                        cross->SetMarkerStyle(29);  // 29 = big cross (star)
+
+                        // create the marker to show the vertex of the flashed interaction
+                        TMarker *cross_flashed = new TMarker(vertex_interaction_flashed.Z(), vertex_interaction_flashed.Y(), 2);  // 2 = cross "×"
+                        cout<<"Drawing vertex in: ("<<vertex_interaction_flashed.Z()<<", "<<vertex_interaction_flashed.Y()<<")" << endl;
+                        cross_flashed->SetMarkerColor(kViolet);
+                        cross_flashed->SetMarkerSize(2.0);
+                        cross_flashed->SetMarkerStyle(29);  // 29 = big cross (star)
+
                         // Create the plots
                         // TPC0
                         if(gr2d_TPC1->GetN() == 0){
                             pad2->cd();
                             TuneGraph_2D(gr2d_TPC0, "Spatial distribution, TPC0");    
                             gr2d_TPC0->Draw("COLZ");
+                            cross->Draw("SAME");
+                            cross_flashed->Draw("SAME");
                             gr2d_TPC0->GetXaxis()->SetRangeUser(Z_MIN, Z_MAX);  // x-axis
                             gr2d_TPC0->GetYaxis()->SetRangeUser(Y_MIN, Y_MAX);  // y-axis
                         }else if(gr2d_TPC0->GetN() == 0){
@@ -511,6 +605,8 @@ void Grid2D_light(){
                             pad2->cd();
                             TuneGraph_2D(gr2d_TPC1, "Spatial distribution, TPC1");     
                             gr2d_TPC1->Draw("COLZ");
+                            cross->Draw("SAME");
+                            cross_flashed->Draw("SAME");
                             gr2d_TPC1->GetXaxis()->SetRangeUser(Z_MIN, Z_MAX);  // x-axis
                             gr2d_TPC1->GetYaxis()->SetRangeUser(Y_MIN, Y_MAX);  // y-axis
                         }
@@ -589,7 +685,7 @@ void Grid2D_light(){
                 
             }// End for(int f=0; f<nopflash; f++){
         } // Finish loop over entries
-
+        /*
         cout<<"Fraction of interaction in case 1: "<<double(total_case1)/((total_case1+total_case2+1./0.8920*total_case3))<<endl;
         cout<<"   -  of which beam neutrino: " << double(total_case1_beam)/double(total_case1) << endl;
         cout<<"   -  of which cosmic: " << double(total_case1_cosmic)/double(total_case1) << endl;
@@ -597,6 +693,7 @@ void Grid2D_light(){
         cout<<"   -  of which beam neutrino: " << double(total_case2_beam)/double(total_case2) << endl;
         cout<<"   -  of which cosmic: " << double(total_case2_cosmic)/double(total_case2) << endl;
         cout<<"Fraction of interaction in case 3: "<<double(1./0.8920*total_case3)/((total_case1+total_case2+1./0.8920*total_case3))<<endl;
+        */
     } // Finish loop over files
    
 }

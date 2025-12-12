@@ -154,7 +154,6 @@ void FastSlowLight(){
         int num_events=event_tree->GetEntries();
         int num_pdsmaps=pdsmap_tree->GetEntries();
         int Niters = num_events;
-
         for (int i=1; i<Niters; i++){
 
             // Get the entry 'i' of the event tree
@@ -259,38 +258,45 @@ void FastSlowLight(){
 
     // Tune the histograms
     TuneHist(hist_Coincident);
+    hist_Coincident->Scale(1.0 / hist_Coincident->Integral());
     hist_Coincident->GetXaxis()->SetTitle("Fast light #PE/Slow light #PE");
     hist_Coincident->GetYaxis()->SetTitle("# Events");
     TuneHist(hist_NoCoincident);
+    hist_NoCoincident->Scale(1.0 / hist_NoCoincident->Integral());
     hist_NoCoincident->GetXaxis()->SetTitle("Fast light #PE/Slow light #PE");
     hist_NoCoincident->GetYaxis()->SetTitle("# Events");
 
     // Select color for the histograms
     // Coincident histograms:
     hist_Coincident->SetLineColor(kRed);
-    hist_Coincident->SetFillColorAlpha(kRed-2, 0.9);
+    hist_Coincident->SetFillColorAlpha(kRed-2, 0.5);
     // NoCoincident histograms:
     hist_NoCoincident->SetLineColor(kBlue);
-    hist_NoCoincident->SetFillColorAlpha(kAzure-8, 0.9);
+    hist_NoCoincident->SetFillColorAlpha(kAzure-8, 0.5);
 
+    /*
     // Create stacked histogram
     // Create a stack
     THStack* hstack = new THStack("hs", "Fast/Slow light;Fast light #PE/Slow light #PE; # Events");
     hstack->Add(hist_Coincident);
     hstack->Add(hist_NoCoincident);
     // Set the Y-axis range
-    hstack->SetMinimum(1);
+    //hstack->SetMinimum(1);
     hstack->Draw("HIST");
+    */
+
+    // Draw the histograms
+    hist_Coincident->Draw("HIST");
+    hist_NoCoincident->Draw("HIST SAME");
 
     // Add a legend
     auto leg = new TLegend(0.65, 0.8, 0.9, 0.9);
     leg->AddEntry(hist_Coincident, "Coincident interaction", "f");
     leg->AddEntry(hist_NoCoincident, "No coincident interaction", "f");
-    leg->SetTextSize(0.02); // Adjust 0.06 to the preferred size
+    leg->SetTextSize(0.02); // Adjust to the preferred size
     leg->Draw("SAME");
 
-
     c1->Update();
-    c1->SaveAs("FastSlowLight/FastSlowLight_030ns.pdf");
+    c1->SaveAs("FastSlowLight/FastSlowLight_200ns_norm_Log.pdf");
    
 }

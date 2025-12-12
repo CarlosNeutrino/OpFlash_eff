@@ -1,3 +1,36 @@
+
+/*
+Exponential in 1D function to represent the expected temporal distribution of OpHits
+Parameters par:
+- par[0] = Amplitude
+- par[1] = Start time
+
+Values of x:
+- x[0] = x axis (time position)
+*/
+double Exp1D(double *x, double *par)
+{
+    // x[0] = x axis (z position)
+    // x[1] = y axis (y position)
+
+    double X = x[0];
+
+    double A   = par[0];    // Contribution of BOTH, slow and fast, light components
+    double As, Af;          // Individual contributions of slow and fast light components
+    // From the literature, the fast component contributes ~23% of the total light yield
+    // Therefore, it can be calculated that:
+    As = A*(1./(1 + 0.23*(SLOW_LIGHT_TIME_CTE/FAST_LIGHT_TIME_CTE)));
+    Af = A - As;
+    double t0  = par[1];
+
+    double exp_value =
+        Af * exp( -((X-t0)/(FAST_LIGHT_TIME_CTE)) ) + As * exp( -((X-t0)/(SLOW_LIGHT_TIME_CTE)) );
+
+    return exp_value;
+}
+
+
+
 /*
 Gassian in 2D function to fit the spatial distribution of OpHits
 Parameters par:

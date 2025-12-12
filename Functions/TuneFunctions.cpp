@@ -6,10 +6,10 @@
 void TuneHist(TH1F* hist){
     hist->SetStats(0);
 
-    hist->GetXaxis()->SetTitleSize(0.06);
-    hist->GetYaxis()->SetTitleSize(0.06);
-    hist->GetXaxis()->SetLabelSize(0.05);
-    hist->GetYaxis()->SetLabelSize(0.05);
+    hist->GetXaxis()->SetTitleSize(0.04);
+    hist->GetYaxis()->SetTitleSize(0.04);
+    hist->GetXaxis()->SetLabelSize(0.03);
+    hist->GetYaxis()->SetLabelSize(0.03);
 
     hist->SetLineStyle(1);
     hist->SetLineWidth(2);
@@ -83,6 +83,22 @@ void TuneHist_2D(TH2F* hist){
 
 }
 
+// For TF1s
+void TuneGraph_1D(TF1 *gr){
+    gr->SetLineColor(kOrange+7);
+    gr->SetLineWidth(3);
+    gr->SetLineStyle(2);    // 2=dashed line
+
+}
+
+// For TGraphs
+void TuneTGraph_1D(TGraph *gr){
+    gr->SetLineColor(kBlack);
+    gr->SetLineWidth(3);
+    gr->SetLineStyle(2);    // 2=dashed line
+
+}
+
 void TuneGraph_2D(TGraph2D *gr, string title){
     gr->GetXaxis()->SetTitleSize(0.04);
     gr->GetYaxis()->SetTitleSize(0.04);
@@ -95,8 +111,6 @@ void TuneGraph_2D(TGraph2D *gr, string title){
     gr->GetXaxis()->SetLimits(Z_MIN, Z_MAX);  // z-axis
     gr->GetYaxis()->SetRangeUser(Y_MIN, Y_MAX);  // y-axis
 
-    //hist->SetLineStyle(1);
-    //hist->SetLineWidth(2);
     gr->SetFillStyle(1001);       //1001-->filling, 0-->no filling 
     gr->SetMarkerStyle(21);
     gr->SetMarkerSize(1.);
