@@ -414,7 +414,7 @@ void eta(){
                     TuneTGraph_1D(gr_eta);
                     gr_eta->Draw("AL");
                     // I save the canvas
-                    c1->SaveAs(Form("Distribution_%i_%i.pdf", i, f));
+                    c1->SaveAs(Form("CoincidentInteractions/Distribution_%i_%i.pdf", i, f));
                 }  
             }// End for(int f=0; f<nopflash; f++){
         } // Finish loop over entries
